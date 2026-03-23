@@ -1031,8 +1031,7 @@ function renderHabits(){
       const checkClass=`h-check${isDone?' done':''}`;
 
       if(h.type==='counter'){
-        return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}" style="--item-color:${cat.color}">
-          <div class="h-item" style="display:none"></div>
+        return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}">
           <div class="h-left">
             <div class="${checkClass}" data-hid="${h.id}"><span class="h-check-ico">${cat.icon}</span></div>
             ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
@@ -1081,7 +1080,7 @@ function renderHabits(){
     </div>`;
   }).join('');
 
-  // Events
+  // Events — check (non-counter)
   sec.querySelectorAll('.h-check[data-hid]').forEach(el=>el.addEventListener('click',e=>{
     e.stopPropagation();
     const h=habits.find(x=>x.id===el.dataset.hid);
@@ -1091,6 +1090,7 @@ function renderHabits(){
     renderHabits();
     toast(cur?'↩️ Annulé':'✅ Fait !');
   }));
+  // Events — counter +
   sec.querySelectorAll('.h-inc').forEach(el=>el.addEventListener('click',e=>{
     e.stopPropagation();
     const h=habits.find(x=>x.id===el.dataset.hid);if(!h)return;
@@ -1099,6 +1099,7 @@ function renderHabits(){
     if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
     renderHabits();
   }));
+  // Events — counter -
   sec.querySelectorAll('.h-dec').forEach(el=>el.addEventListener('click',e=>{
     e.stopPropagation();
     const h=habits.find(x=>x.id===el.dataset.hid);if(!h)return;
@@ -1106,7 +1107,14 @@ function renderHabits(){
     if(cur>0)setLogVal(h.id,td,cur-1);
     renderHabits();
   }));
-  sec.querySelectorAll('.h-item[data-hid]').forEach(el=>el.addEventListener('click',()=>openHabitSheet(el.dataset.hid)));
+  // Events — tap card body to edit (only non-interactive areas)
+  sec.querySelectorAll('.h-item[data-hid]').forEach(el=>{
+    el.addEventListener('click',e=>{
+      // ignore clicks on interactive children
+      if(e.target.closest('.h-check,.h-counter,.h-cnt-btn'))return;
+      openHabitSheet(el.dataset.hid);
+    });
+  });
 }
 
 function getCatLabel(c){return HCATS[c]?.label||c;}
@@ -1411,15 +1419,33 @@ function openTaskPicker(){
 function schedAll(){
   remTimers.forEach(clearTimeout); remTimers=[];
   if(Notification.permission!=='granted')return;
+  // Note reminders
   notes.filter(n=>n.reminderDate||n.reminder).forEach(n=>{
-    // one-time reminder
     if(n.reminderDate&&!n.reminder){
-      const d=new Date(n.reminderDate), now=Date.now();
-      const delay=d-now; if(delay>0&&delay<2147483647)
-        remTimers.push(setTimeout(()=>fireNotif(n),delay));
+      const delay=new Date(n.reminderDate)-Date.now();
+      if(delay>0&&delay<2147483647)remTimers.push(setTimeout(()=>fireNotif(n),delay));
     }
-    // recurring
     if(n.reminder)schedRecur(n);
+  });
+  // Habit reminders — rescheduled at every app open / save
+  habits.forEach(h=>{if(h.reminderTime)schedHabitReminder(h);});
+}
+
+function checkMissedHabitReminders(){
+  // On app open, fire any habit reminder whose time passed today and habit not yet done
+  if(Notification.permission!=='granted')return;
+  const now=new Date();
+  const td=today();
+  habits.forEach(h=>{
+    if(!h.reminderTime)return;
+    const[hh,mm]=h.reminderTime.split(':').map(Number);
+    const remTime=new Date(); remTime.setHours(hh,mm,0,0);
+    const missedWindow=5*60*1000; // fired if missed within last 5 min
+    const diff=now-remTime;
+    if(diff>=0&&diff<=missedWindow){
+      const goal=h.type==='counter'?(h.goal||1):1;
+      if(getLogVal(h.id,td)<goal)fireNotif({id:h.id,title:'🔔 '+h.name,body:h.type==='counter'?`Objectif : ${goal} ${h.unit||''}`:'',category:h.category});
+    }
   });
 }
 function schedRecur(n){
@@ -1530,7 +1556,15 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════════
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-load(); renderNotes(); chkNotif(); schedAll(); initVoice(); updatePomoUI();
+// Re-schedule timers when app becomes visible again (after sleep/close)
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    schedAll();
+    checkMissedHabitReminders();
+  }
+});
+
+load(); renderNotes(); chkNotif(); schedAll(); checkMissedHabitReminders(); initVoice(); updatePomoUI();
 </script>
 </body>
 </html>
