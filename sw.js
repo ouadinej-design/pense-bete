@@ -1,55 +1,48 @@
-const CACHE_NAME = 'pensebete-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap'
-];
+const CACHE_NAME = 'memopro-v5';
 
-// Install: cache all assets
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => {})
-  );
-  self.skipWaiting();
-});
+// Network-first: toujours récupérer la dernière version, cache en fallback
+self.addEventListener('install', () => self.skipWaiting());
 
-// Activate: clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: cache-first strategy
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200) return response;
-        const clone = response.clone();
+  // Fonts: cache-first (externes, ne changent pas)
+  if (event.request.url.includes('fonts.googleapis') || event.request.url.includes('fonts.gstatic')) {
+    event.respondWith(
+      caches.match(event.request).then(c => c || fetch(event.request).then(r => {
+        const clone = r.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return r;
+      }))
+    );
+    return;
+  }
+  // App files: network-first, cache en fallback
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
         return response;
-      }).catch(() => caches.match('/index.html'));
-    })
+      })
+      .catch(() => caches.match(event.request).then(c => c || caches.match('/index.html')))
   );
 });
 
-// Notification click
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (const client of clientList) {
-        if ('focus' in client) return client.focus();
-      }
+    clients.matchAll({ type: 'window' }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
       if (clients.openWindow) return clients.openWindow('/');
     })
   );
