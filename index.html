@@ -121,23 +121,110 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
 .no-agenda{padding:32px 22px;text-align:center;color:var(--t2);font-size:13px}
 
 /* ── HABITS ── */
-.habit-list{padding:0 22px;display:flex;flex-direction:column;gap:10px}
-.habit-card{background:var(--card);border:1.5px solid var(--b1);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .18s}
-.habit-card:active{border-color:var(--b2)}
-.habit-check{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;cursor:pointer}
-.habit-check.done{background:var(--lime);border-color:var(--lime);transform:scale(1.08)}
-.habit-check.done::after{content:'✓';font-size:18px;color:#080808;font-weight:700}
-.habit-info{flex:1;min-width:0}
-.habit-name{font-family:var(--hf);font-size:14.5px;font-weight:700;margin-bottom:4px}
-.habit-meta{display:flex;align-items:center;gap:8px}
-.streak-badge{font-size:11px;font-weight:600;color:var(--ora);background:rgba(255,138,53,.12);padding:2px 8px;border-radius:100px}
-.habit-dots{display:flex;gap:4px}
-.h-dot{width:8px;height:8px;border-radius:50%;background:var(--b2)}
-.h-dot.done{background:var(--lime)}
-.h-dot.today{background:var(--lime);box-shadow:0 0 5px var(--lime)}
-.no-habits{padding:40px 22px;text-align:center;color:var(--t2);font-size:13px}
-/* habit add sheet */
+/* Top hero ring */
+.h-hero{padding:4px 22px 18px;display:flex;gap:16px;align-items:center}
+.h-ring-wrap{position:relative;width:100px;height:100px;flex-shrink:0}
+.h-ring-wrap svg{transform:rotate(-90deg)}
+.h-ring-bg{fill:none;stroke:var(--card2);stroke-width:7}
+.h-ring-fill{fill:none;stroke:var(--lime);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.34,1.2,.64,1)}
+.h-ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.h-ring-pct{font-family:var(--hf);font-size:22px;font-weight:800;color:var(--lime);line-height:1}
+.h-ring-lbl{font-size:9px;color:var(--t2);font-weight:600;letter-spacing:.5px}
+.h-hero-stats{flex:1;display:flex;flex-direction:column;gap:10px}
+.h-mini-stat{display:flex;align-items:center;gap:10px}
+.h-mini-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.h-mini-val{font-family:var(--hf);font-size:16px;font-weight:800;line-height:1}
+.h-mini-lbl{font-size:10px;color:var(--t2);margin-top:1px}
+
+/* weekly chart */
+.h-chart-wrap{padding:0 22px 16px}
+.h-chart-card{background:var(--card);border:1.5px solid var(--b1);border-radius:14px;padding:14px 16px}
+.h-chart-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.h-chart-title{font-family:var(--hf);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2)}
+.h-chart-rate{font-family:var(--hf);font-size:13px;font-weight:700;color:var(--lime)}
+.h-chart{display:flex;align-items:flex-end;gap:5px;height:64px}
+.h-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.h-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end;background:var(--card2);border-radius:5px;overflow:hidden}
+.h-bar{width:100%;border-radius:5px;transition:height .4s cubic-bezier(.34,1.2,.64,1)}
+.h-bar.zero{background:transparent}
+.h-bar-day{font-size:9px;font-weight:700;color:var(--t3)}
+.h-bar-day.today{color:var(--lime)}
+
+/* cat chart */
+.h-cat-chart{display:flex;flex-direction:column;gap:8px;margin-top:14px;border-top:1px solid var(--b1);padding-top:14px}
+.h-cat-row{display:flex;align-items:center;gap:10px}
+.h-cat-ico{font-size:14px;width:20px;text-align:center}
+.h-cat-name{font-size:11px;color:var(--t2);width:52px;flex-shrink:0}
+.h-cat-bar-wrap{flex:1;height:6px;background:var(--card2);border-radius:3px;overflow:hidden}
+.h-cat-bar{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.34,1.2,.64,1)}
+.h-cat-pct{font-size:10px;font-weight:700;color:var(--t2);width:30px;text-align:right}
+
+/* routine sections */
+.routine-section{margin-bottom:6px}
+.routine-header{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 8px;cursor:pointer}
+.routine-title{display:flex;align-items:center;gap:8px;font-family:var(--hf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2)}
+.routine-ico{font-size:15px}
+.routine-prog-pills{display:flex;align-items:center;gap:6px}
+.routine-prog-text{font-size:11px;color:var(--t3)}
+.routine-prog-mini{display:flex;gap:3px}
+.routine-pip{width:6px;height:6px;border-radius:50%;background:var(--b2)}
+.routine-pip.done{background:var(--lime)}
+.routine-items{padding:0 22px;display:flex;flex-direction:column;gap:8px}
+
+/* habit item */
+.h-item{background:var(--card);border:1.5px solid var(--b1);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative;overflow:hidden}
+.h-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;transition:opacity .2s}
+.h-item:active{transform:scale(.97)}
+.h-item.done-item{border-color:rgba(200,255,71,.18);background:rgba(200,255,71,.03)}
+.h-item.done-item::before{opacity:1}
+.h-left{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.h-check{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .22s cubic-bezier(.34,1.56,.64,1);cursor:pointer}
+.h-check.done{background:var(--lime);border-color:var(--lime);transform:scale(1.1)}
+.h-check.done::after{content:'✓';font-size:15px;color:#080808;font-weight:800}
+.h-check.done .h-check-ico{display:none}
+.h-check-ico{font-size:16px;line-height:1}
+.h-streak{font-size:9px;color:var(--ora);font-weight:700}
+.h-body{flex:1;min-width:0}
+.h-name{font-family:var(--hf);font-size:14px;font-weight:700;margin-bottom:4px;line-height:1.2}
+.h-catbadge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;margin-bottom:5px}
+.h-prog-row{display:flex;align-items:center;gap:8px}
+.h-progbar{flex:1;height:4px;background:var(--card2);border-radius:2px;overflow:hidden}
+.h-progbar-fill{height:100%;background:var(--lime);border-radius:2px;transition:width .3s ease}
+.h-prog-txt{font-size:10px;color:var(--t2);white-space:nowrap;font-weight:600}
+.h-reminder{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
+
+/* counter widget */
+.h-counter{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.h-cnt-btn{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--b2);background:transparent;color:var(--tx);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .18s;font-weight:300}
+.h-cnt-btn:active{background:var(--lime);border-color:var(--lime);color:#080808;transform:scale(.9)}
+.h-cnt-val{font-family:var(--hf);font-size:16px;font-weight:800;color:var(--lime);min-width:28px;text-align:center;line-height:1}
+.h-cnt-goal{font-size:9px;color:var(--t3);text-align:center;margin-top:1px}
+
+.no-habits{padding:40px 22px;text-align:center;color:var(--t2);font-size:13px;grid-column:span 2}
 .habit-form{padding:8px 24px 0}
+
+/* habit type selector */
+.htype-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.htype-opt{padding:12px 8px;border-radius:12px;border:1.5px solid var(--b1);background:var(--card);text-align:center;cursor:pointer;transition:all .15s}
+.htype-opt .hti{font-size:22px;margin-bottom:4px}
+.htype-opt .htn{font-size:11px;font-weight:600;color:var(--t2)}
+.htype-opt.on{background:var(--lime-d);border-color:var(--lime)}.htype-opt.on .htn{color:var(--lime)}
+
+/* routine selector */
+.hrout-row{display:flex;gap:8px}
+.hrout-opt{flex:1;padding:10px 4px;border-radius:12px;border:1.5px solid var(--b1);background:var(--card);text-align:center;cursor:pointer;transition:all .15s;font-size:11px;font-weight:600;color:var(--t2)}
+.hrout-opt.on{background:var(--lime-d);border-color:var(--lime);color:var(--lime)}
+
+/* cat habit */
+.hcat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.hcat-opt{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.hcat-blob{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid transparent;transition:all .18s}
+.hcat-opt.on .hcat-blob{border-color:var(--tx);transform:scale(1.1)}
+.hcat-nm{font-size:9px;color:var(--t3);font-weight:500;text-align:center}
+
+.inp-goal{width:100%;background:var(--card);border:1.5px solid var(--b1);border-radius:10px;padding:10px 14px;font-family:var(--bf);font-size:14px;color:var(--tx);outline:none;transition:border-color .18s}
+.inp-goal:focus{border-color:var(--lime)}
+.inp-goal::placeholder{color:var(--t3)}
 
 /* ── FOCUS / POMODORO ── */
 .focus-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 22px;gap:28px}
@@ -343,13 +430,35 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
   <!-- ══ HABITS TAB ══ -->
   <div class="tab" id="tab-habits">
     <div class="tab-header">
-      <div class="header-row">
-        <div><div class="eyebrow">SUIVI</div><div class="tab-title">Habitudes</div></div>
-        <div class="stat-box"><div class="stat-n" id="hn">0</div><div class="stat-l">streak max</div></div>
-      </div>
+      <div class="eyebrow">MES ROUTINES</div>
+      <div class="tab-title">Habitudes</div>
     </div>
     <div class="scroll">
-      <div class="habit-list" id="habit-list"></div>
+      <div class="h-hero">
+        <div class="h-ring-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle class="h-ring-bg" cx="50" cy="50" r="42"/>
+            <circle class="h-ring-fill" id="h-ring-fill" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+          </svg>
+          <div class="h-ring-center">
+            <div class="h-ring-pct" id="h-ring-pct">0%</div>
+            <div class="h-ring-lbl">AUJOURD'HUI</div>
+          </div>
+        </div>
+        <div class="h-hero-stats" id="h-hero-stats"></div>
+      </div>
+      <div class="h-chart-wrap">
+        <div class="h-chart-card">
+          <div class="h-chart-hdr">
+            <div class="h-chart-title">7 derniers jours</div>
+            <div class="h-chart-rate" id="h-week-rate">—</div>
+          </div>
+          <div class="h-chart" id="h-chart"></div>
+          <div class="h-cat-chart" id="h-cat-chart"></div>
+        </div>
+      </div>
+      <div id="habit-sections"></div>
     </div>
   </div>
 
@@ -506,16 +615,44 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
     <div class="grip"></div>
     <div class="sh-hdr"><span class="sh-title" id="hsht">Nouvelle habitude</span><button class="sh-close" id="hshc">✕</button></div>
     <div class="habit-form">
-      <div class="field"><label class="lbl">Nom</label><input class="inp-habit" id="h-name" placeholder="Nom de l'habitude…" maxlength="50"></div>
+      <div class="field"><label class="lbl">Nom</label><input class="inp-title" id="h-name" placeholder="Ex: Boire de l'eau, Sport, Méditer…" maxlength="50"></div>
       <div class="field">
-        <label class="lbl">Icône</label>
-        <div class="ico-grid" id="ico-grid">
-          <div class="ico-opt on" data-i="💪">💪</div><div class="ico-opt" data-i="📚">📚</div><div class="ico-opt" data-i="🧘">🧘</div>
-          <div class="ico-opt" data-i="🏃">🏃</div><div class="ico-opt" data-i="💧">💧</div><div class="ico-opt" data-i="🥗">🥗</div>
-          <div class="ico-opt" data-i="😴">😴</div><div class="ico-opt" data-i="✍️">✍️</div><div class="ico-opt" data-i="🎯">🎯</div>
-          <div class="ico-opt" data-i="🧠">🧠</div><div class="ico-opt" data-i="🎵">🎵</div><div class="ico-opt" data-i="🌿">🌿</div>
-          <div class="ico-opt" data-i="💊">💊</div><div class="ico-opt" data-i="🚴">🚴</div>
+        <label class="lbl">Type</label>
+        <div class="htype-row">
+          <div class="htype-opt on" data-ht="check"><div class="hti">✅</div><div class="htn">Oui / Non</div></div>
+          <div class="htype-opt" data-ht="counter"><div class="hti">🔢</div><div class="htn">Compteur</div></div>
         </div>
+      </div>
+      <div class="field" id="h-goal-field" style="display:none">
+        <label class="lbl">Objectif (nombre)</label>
+        <input class="inp-goal" id="h-goal" type="number" min="1" max="999" value="8" placeholder="Ex: 8 verres, 30 min…">
+        <input class="inp-goal" id="h-unit" type="text" placeholder="Unité (verres, min, km…)" maxlength="20" style="margin-top:8px">
+      </div>
+      <div class="field">
+        <label class="lbl">Routine</label>
+        <div class="hrout-row">
+          <div class="hrout-opt on" data-r="matin">☀️ Matin</div>
+          <div class="hrout-opt" data-r="journee">🌤 Journée</div>
+          <div class="hrout-opt" data-r="soir">🌙 Soir</div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Catégorie</label>
+        <div class="hcat-row" id="hcat-row">
+          <div class="hcat-opt on" data-hc="health"><div class="hcat-blob" style="background:rgba(74,222,128,.18)">🌿</div><span class="hcat-nm">Santé</span></div>
+          <div class="hcat-opt" data-hc="sport"><div class="hcat-blob" style="background:rgba(255,82,82,.18)">🏃</div><span class="hcat-nm">Sport</span></div>
+          <div class="hcat-opt" data-hc="food"><div class="hcat-blob" style="background:rgba(250,204,21,.18)">🥗</div><span class="hcat-nm">Alim.</span></div>
+          <div class="hcat-opt" data-hc="sleep"><div class="hcat-blob" style="background:rgba(96,165,250,.18)">😴</div><span class="hcat-nm">Sommeil</span></div>
+          <div class="hcat-opt" data-hc="work"><div class="hcat-blob" style="background:rgba(255,138,53,.18)">💼</div><span class="hcat-nm">Travail</span></div>
+          <div class="hcat-opt" data-hc="mental"><div class="hcat-blob" style="background:rgba(167,139,250,.18)">🧘</div><span class="hcat-nm">Mental</span></div>
+          <div class="hcat-opt" data-hc="meds"><div class="hcat-blob" style="background:rgba(244,114,182,.18)">💊</div><span class="hcat-nm">Médic.</span></div>
+          <div class="hcat-opt" data-hc="water"><div class="hcat-blob" style="background:rgba(96,165,250,.18)">💧</div><span class="hcat-nm">Hydrat.</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Rappel (heure)</label>
+        <input class="inp-goal" id="h-time" type="time" value="">
+        <div style="font-size:11px;color:var(--t3);margin-top:5px">Laisse vide si pas de rappel</div>
       </div>
       <button class="btn-save" id="h-save">Créer l'habitude</button>
       <button class="btn-del hide" id="h-del">Supprimer l'habitude</button>
@@ -751,65 +888,228 @@ function renderAgenda(){
 }
 
 // ══════════════════════════════════════════════
-// RENDER HABITS
+// HABITS ENGINE
 // ══════════════════════════════════════════════
+const HCATS={
+  health:{icon:'🌿',color:'#4ADE80',bg:'rgba(74,222,128,.18)',label:'Santé'},
+  sport: {icon:'🏃',color:'#FF5252',bg:'rgba(255,82,82,.18)',label:'Sport'},
+  food:  {icon:'🥗',color:'#FACC15',bg:'rgba(250,204,21,.18)',label:'Alim.'},
+  sleep: {icon:'😴',color:'#60A5FA',bg:'rgba(96,165,250,.18)',label:'Sommeil'},
+  work:  {icon:'💼',color:'#FF8A35',bg:'rgba(255,138,53,.18)',label:'Travail'},
+  mental:{icon:'🧘',color:'#A78BFA',bg:'rgba(167,139,250,.18)',label:'Mental'},
+  meds:  {icon:'💊',color:'#F472B6',bg:'rgba(244,114,182,.18)',label:'Médic.'},
+  water: {icon:'💧',color:'#38BDF8',bg:'rgba(56,189,248,.18)',label:'Hydrat.'},
+};
+const ROUTINES=[
+  {key:'matin',  label:'Matin',      ico:'☀️'},
+  {key:'journee',label:'Journée',    ico:'🌤'},
+  {key:'soir',   label:'Soir',       ico:'🌙'},
+];
+
 function getStreak(hid){
-  let streak=0, d=new Date();
+  let streak=0; const d=new Date();
   for(let i=0;i<365;i++){
-    const k=`${hid}_${d.toISOString().slice(0,10)}`;
+    const k=`${hid}_${new Date(d.getTime()-i*86400000).toISOString().slice(0,10)}`;
     if(habitLogs[k])streak++;
     else if(i>0)break;
-    d.setDate(d.getDate()-1);
   }
   return streak;
 }
-function renderHabits(){
-  const hl=document.getElementById('habit-list');
-  const hn=document.getElementById('hn');
-  const td=today();
-  if(!habits.length){
-    hl.innerHTML=`<div class="no-habits">💪<br><br>Aucune habitude.<br>Appuie sur + pour en créer une.</div>`;
-    hn.textContent='0'; return;
+function getLogVal(hid,ds){return habitLogs[`${hid}_${ds}`]||0;}
+function setLogVal(hid,ds,val){
+  const k=`${hid}_${ds}`;
+  if(!val)delete habitLogs[k]; else habitLogs[k]=val;
+  saveL();
+}
+function isDoneH(h,ds){return getLogVal(h.id,ds)>=(h.type==='counter'?(h.goal||1):1);}
+function getWeeklyRate(){
+  if(!habits.length)return 0;
+  let tot=0,done=0;
+  for(let i=0;i<7;i++){
+    const ds=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    habits.forEach(h=>{tot++;if(isDoneH(h,ds))done++;});
   }
+  return tot?Math.round(done/tot*100):0;
+}
+
+function renderHabits(){
+  const td=today();
+  const rate=getWeeklyRate();
+  const doneToday=habits.filter(h=>isDoneH(h,td)).length;
+  const pctToday=habits.length?Math.round(doneToday/habits.length*100):0;
   const maxStreak=habits.reduce((mx,h)=>Math.max(mx,getStreak(h.id)),0);
-  hn.textContent=maxStreak;
-  hl.innerHTML=habits.map(h=>{
-    const streak=getStreak(h.id);
-    const doneToday=!!habitLogs[`${h.id}_${td}`];
-    // last 7 days dots
-    const dots=Array.from({length:7},(_,i)=>{
-      const dd=new Date(); dd.setDate(dd.getDate()-(6-i));
-      const dk=`${h.id}_${dd.toISOString().slice(0,10)}`;
-      const isToday=i===6;
-      const isDone=!!habitLogs[dk];
-      return `<div class="h-dot${isDone?(isToday?' today':' done'):''}"></div>`;
-    }).join('');
-    return `<div class="habit-card" data-hid="${h.id}">
-      <div class="habit-check${doneToday?' done':''}" data-hid="${h.id}" id="hc-${h.id}"></div>
-      <div class="habit-info">
-        <div class="habit-name">${h.icon} ${esc(h.name)}</div>
-        <div class="habit-meta">
-          ${streak>0?`<span class="streak-badge">🔥 ${streak} jour${streak>1?'s':''}</span>`:''}
-          <div class="habit-dots">${dots}</div>
-        </div>
-      </div>
+  const CIRC=263.9;
+
+  // Ring
+  document.getElementById('h-ring-pct').textContent=pctToday+'%';
+  const fill=document.getElementById('h-ring-fill');
+  fill.style.strokeDashoffset=CIRC*(1-pctToday/100);
+  // ring color by completion
+  fill.style.stroke=pctToday>=100?'#4ADE80':pctToday>=50?'var(--lime)':'#FF8A35';
+
+  // Mini stats
+  document.getElementById('h-hero-stats').innerHTML=`
+    <div class="h-mini-stat">
+      <div class="h-mini-ico" style="background:rgba(200,255,71,.12)">✅</div>
+      <div><div class="h-mini-val">${doneToday}<span style="font-size:11px;color:var(--t2);font-weight:400">/${habits.length}</span></div><div style="font-size:10px;color:var(--t2)">Faites aujourd'hui</div></div>
+    </div>
+    <div class="h-mini-stat">
+      <div class="h-mini-ico" style="background:rgba(255,138,53,.12)">🔥</div>
+      <div><div class="h-mini-val">${maxStreak||'—'}</div><div style="font-size:10px;color:var(--t2)">Streak max (jours)</div></div>
+    </div>
+    <div class="h-mini-stat">
+      <div class="h-mini-ico" style="background:rgba(96,165,250,.12)">📈</div>
+      <div><div class="h-mini-val">${rate}%</div><div style="font-size:10px;color:var(--t2)">Taux cette semaine</div></div>
+    </div>`;
+
+  // Weekly chart
+  document.getElementById('h-week-rate').textContent=rate+'%';
+  const chart=document.getElementById('h-chart');
+  const days=['D','L','M','M','J','V','S'];
+  const bars=Array.from({length:7},(_,i)=>{
+    const d=new Date(Date.now()-(6-i)*86400000);
+    const ds=d.toISOString().slice(0,10);
+    let pct=0;
+    if(habits.length){
+      let t=0,ok=0;
+      habits.forEach(h=>{t++;if(isDoneH(h,ds))ok++;});
+      pct=t?Math.round(ok/t*100):0;
+    }
+    return {pct,day:days[d.getDay()],isToday:i===6};
+  });
+  const mx=Math.max(...bars.map(b=>b.pct),1);
+  chart.innerHTML=bars.map(b=>{
+    const col=b.pct>=80?'#4ADE80':b.pct>=50?'var(--lime)':b.pct>0?'#FF8A35':'transparent';
+    return `<div class="h-bar-col">
+      <div class="h-bar-wrap"><div class="h-bar" style="height:${b.pct?Math.max(b.pct/mx*100,6):0}%;background:${col}"></div></div>
+      <div class="h-bar-day${b.isToday?' today':''}">${b.day}</div>
     </div>`;
   }).join('');
-  // check events
-  hl.querySelectorAll('.habit-check').forEach(el=>{
-    el.addEventListener('click',e=>{e.stopPropagation();toggleHabit(el.dataset.hid);});
-  });
-  hl.querySelectorAll('.habit-card').forEach(el=>{
-    el.addEventListener('click',()=>openHabitSheet(el.dataset.hid));
-  });
+
+  // Category breakdown chart
+  const catChart=document.getElementById('h-cat-chart');
+  const activeCats=[...new Set(habits.map(h=>h.category||'health'))];
+  if(activeCats.length>1){
+    catChart.innerHTML=activeCats.map(c=>{
+      const cat=HCATS[c]||HCATS.health;
+      const catHabits=habits.filter(h=>(h.category||'health')===c);
+      let tot=0,done=0;
+      for(let i=0;i<7;i++){
+        const ds=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+        catHabits.forEach(h=>{tot++;if(isDoneH(h,ds))done++;});
+      }
+      const pct=tot?Math.round(done/tot*100):0;
+      return `<div class="h-cat-row">
+        <div class="h-cat-ico">${cat.icon}</div>
+        <div class="h-cat-name">${cat.label}</div>
+        <div class="h-cat-bar-wrap"><div class="h-cat-bar" style="width:${pct}%;background:${cat.color}"></div></div>
+        <div class="h-cat-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+  }else{catChart.innerHTML='';}
+
+  // Sections
+  const sec=document.getElementById('habit-sections');
+  if(!habits.length){
+    sec.innerHTML=`<div style="padding:30px 22px;text-align:center;color:var(--t2);font-size:13px">💪<br><br>Aucune habitude.<br>Appuie sur <b>+</b> pour en créer une.</div>`;
+    return;
+  }
+
+  sec.innerHTML=ROUTINES.map(r=>{
+    const rHabits=habits.filter(h=>(h.routine||'matin')===r.key);
+    if(!rHabits.length)return '';
+    const rDone=rHabits.filter(h=>isDoneH(h,td)).length;
+    const pips=rHabits.map(h=>`<div class="routine-pip${isDoneH(h,td)?' done':''}"></div>`).join('');
+
+    const items=rHabits.map(h=>{
+      const cat=HCATS[h.category||'health']||HCATS.health;
+      const streak=getStreak(h.id);
+      const val=getLogVal(h.id,td);
+      const goal=h.type==='counter'?(h.goal||1):1;
+      const isDone=val>=goal;
+      const pct=Math.min(100,Math.round(val/goal*100));
+      const checkClass=`h-check${isDone?' done':''}`;
+
+      if(h.type==='counter'){
+        return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}" style="--item-color:${cat.color}">
+          <div class="h-item" style="display:none"></div>
+          <div class="h-left">
+            <div class="${checkClass}" data-hid="${h.id}"><span class="h-check-ico">${cat.icon}</span></div>
+            ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
+          </div>
+          <div class="h-body" style="flex:1;min-width:0">
+            <div class="h-name">${esc(h.name)}</div>
+            <div class="h-prog-row">
+              <div class="h-progbar"><div class="h-progbar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
+              <div class="h-prog-txt">${val}/${goal}${h.unit?' '+esc(h.unit):''}</div>
+            </div>
+            ${h.reminderTime?`<div class="h-reminder">⏰ ${h.reminderTime}</div>`:''}
+          </div>
+          <div class="h-counter">
+            <button class="h-cnt-btn h-dec" data-hid="${h.id}">−</button>
+            <div><div class="h-cnt-val" style="color:${cat.color}">${val}</div><div class="h-cnt-goal">/${goal}</div></div>
+            <button class="h-cnt-btn h-inc" data-hid="${h.id}">+</button>
+          </div>
+        </div>`;
+      }
+
+      return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}">
+        <div class="h-left">
+          <div class="${checkClass}" data-hid="${h.id}"><span class="h-check-ico">${cat.icon}</span></div>
+          ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
+        </div>
+        <div class="h-body" style="flex:1;min-width:0">
+          <div class="h-name">${esc(h.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+            <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:${cat.bg};color:${cat.color}">${cat.icon} ${cat.label}</span>
+            ${h.reminderTime?`<span class="h-reminder">⏰ ${h.reminderTime}</span>`:''}
+          </div>
+        </div>
+        ${isDone?`<div style="font-size:20px;flex-shrink:0">✨</div>`:''}
+      </div>`;
+    }).join('');
+
+    return `<div class="routine-section">
+      <div class="routine-header">
+        <div class="routine-title"><span class="routine-ico">${r.ico}</span>${r.label}</div>
+        <div class="routine-prog-pills">
+          <span class="routine-prog-text">${rDone}/${rHabits.length}</span>
+          <div class="routine-prog-mini">${pips}</div>
+        </div>
+      </div>
+      <div class="routine-items">${items}</div>
+    </div>`;
+  }).join('');
+
+  // Events
+  sec.querySelectorAll('.h-check[data-hid]').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation();
+    const h=habits.find(x=>x.id===el.dataset.hid);
+    if(!h||h.type==='counter')return;
+    const cur=getLogVal(h.id,td);
+    setLogVal(h.id,td,cur?0:1);
+    renderHabits();
+    toast(cur?'↩️ Annulé':'✅ Fait !');
+  }));
+  sec.querySelectorAll('.h-inc').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation();
+    const h=habits.find(x=>x.id===el.dataset.hid);if(!h)return;
+    const cur=getLogVal(h.id,td);
+    if(cur<(h.goal||1)*2)setLogVal(h.id,td,cur+1);
+    if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
+    renderHabits();
+  }));
+  sec.querySelectorAll('.h-dec').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation();
+    const h=habits.find(x=>x.id===el.dataset.hid);if(!h)return;
+    const cur=getLogVal(h.id,td);
+    if(cur>0)setLogVal(h.id,td,cur-1);
+    renderHabits();
+  }));
+  sec.querySelectorAll('.h-item[data-hid]').forEach(el=>el.addEventListener('click',()=>openHabitSheet(el.dataset.hid)));
 }
-function toggleHabit(hid){
-  const k=`${hid}_${today()}`;
-  habitLogs[k]=!habitLogs[k];
-  if(!habitLogs[k])delete habitLogs[k];
-  saveL(); renderHabits();
-  toast(habitLogs[`${hid}_${today()}`]?'✅ Fait !':'↩️ Annulé');
-}
+
+function getCatLabel(c){return HCATS[c]?.label||c;}
 
 // ══════════════════════════════════════════════
 // NOTE SHEET
@@ -927,6 +1227,8 @@ function delNote(){
 // ══════════════════════════════════════════════
 // HABIT SHEET
 // ══════════════════════════════════════════════
+let selHType='check', selHRoutine='matin', selHCat='health';
+
 function openHabitSheet(id){
   editHabitId=id||null;
   document.getElementById('hsht').textContent=id?'Modifier':'Nouvelle habitude';
@@ -934,27 +1236,77 @@ function openHabitSheet(id){
   if(id){
     const h=habits.find(x=>x.id===id); if(!h)return;
     document.getElementById('h-name').value=h.name||'';
-    setIco(h.icon||'💪');
+    document.getElementById('h-goal').value=h.goal||8;
+    document.getElementById('h-unit').value=h.unit||'';
+    document.getElementById('h-time').value=h.reminderTime||'';
+    setHType(h.type||'check');
+    setHRoutine(h.routine||'matin');
+    setHCat(h.category||'health');
   }else{
-    document.getElementById('h-name').value=''; setIco('💪');
+    document.getElementById('h-name').value='';
+    document.getElementById('h-goal').value=8;
+    document.getElementById('h-unit').value='';
+    document.getElementById('h-time').value='';
+    setHType('check'); setHRoutine('matin'); setHCat('health');
   }
   document.getElementById('hov').classList.add('open');
   setTimeout(()=>document.getElementById('h-name').focus(),350);
 }
 function closeHabitSheet(){document.getElementById('hov').classList.remove('open');editHabitId=null;}
-function setIco(i){selIco=i;document.querySelectorAll('.ico-opt').forEach(el=>el.classList.toggle('on',el.dataset.i===i));}
+function setHType(t){
+  selHType=t;
+  document.querySelectorAll('.htype-opt').forEach(el=>el.classList.toggle('on',el.dataset.ht===t));
+  document.getElementById('h-goal-field').style.display=t==='counter'?'block':'none';
+}
+function setHRoutine(r){
+  selHRoutine=r;
+  document.querySelectorAll('.hrout-opt').forEach(el=>el.classList.toggle('on',el.dataset.r===r));
+}
+function setHCat(c){
+  selHCat=c;
+  document.querySelectorAll('.hcat-opt').forEach(el=>el.classList.toggle('on',el.dataset.hc===c));
+}
 function saveHabit(){
   const name=document.getElementById('h-name').value.trim();
   if(!name){toast('⚠️ Donne un nom');return;}
-  const h={id:editHabitId||uid(),name,icon:selIco,createdAt:Date.now()};
+  const h={
+    id:editHabitId||uid(), name,
+    type:selHType,
+    routine:selHRoutine,
+    category:selHCat,
+    goal:selHType==='counter'?(parseInt(document.getElementById('h-goal').value)||8):1,
+    unit:document.getElementById('h-unit').value.trim(),
+    reminderTime:document.getElementById('h-time').value||null,
+    createdAt:editHabitId?(habits.find(x=>x.id===editHabitId)?.createdAt||Date.now()):Date.now(),
+  };
   if(editHabitId)habits[habits.findIndex(x=>x.id===editHabitId)]=h; else habits.push(h);
   saveH(); closeHabitSheet(); renderHabits();
+  // schedule reminder
+  schedHabitReminder(h);
   toast(editHabitId?'✅ Modifié':'✅ Habitude ajoutée');
 }
 function delHabit(){
   if(!editHabitId||!confirm('Supprimer cette habitude ?'))return;
   habits=habits.filter(x=>x.id!==editHabitId);
   saveH(); closeHabitSheet(); renderHabits(); toast('🗑️ Supprimée');
+}
+
+function schedHabitReminder(h){
+  if(!h.reminderTime||Notification.permission!=='granted')return;
+  const[hh,mm]=h.reminderTime.split(':').map(Number);
+  const now=new Date(), nx=new Date();
+  nx.setHours(hh,mm,0,0);
+  if(nx<=now)nx.setDate(nx.getDate()+1);
+  const delay=nx-now;
+  if(delay>0&&delay<2147483647){
+    remTimers.push(setTimeout(()=>{
+      const td2=new Date().toISOString().slice(0,10);
+      const v=getLogVal(h.id,td2);
+      const goal=h.type==='counter'?(h.goal||1):1;
+      if(v<goal)fireNotif({id:h.id,title:h.name,body:h.type==='counter'?`Objectif: ${goal} ${h.unit||''}`:''});
+      setTimeout(()=>{const u=habits.find(x=>x.id===h.id);if(u)schedHabitReminder(u);},1200);
+    },delay));
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1135,7 +1487,9 @@ document.getElementById('tp-ov').addEventListener('click',e=>{if(e.target===docu
 
 document.querySelectorAll('.popt').forEach(el=>el.addEventListener('click',()=>setPrio(el.dataset.p)));
 document.querySelectorAll('.copt').forEach(el=>el.addEventListener('click',()=>setCat(el.dataset.c)));
-document.querySelectorAll('.ico-opt').forEach(el=>el.addEventListener('click',()=>setIco(el.dataset.i)));
+document.querySelectorAll('.htype-opt').forEach(el=>el.addEventListener('click',()=>setHType(el.dataset.ht)));
+document.querySelectorAll('.hrout-opt').forEach(el=>el.addEventListener('click',()=>setHRoutine(el.dataset.r)));
+document.querySelectorAll('.hcat-opt').forEach(el=>el.addEventListener('click',()=>setHCat(el.dataset.hc)));
 document.getElementById('rem-head').addEventListener('click',()=>setRem(!remOn));
 document.getElementById('freq').addEventListener('change',e=>freqUI(e.target.value));
 document.querySelectorAll('.dbtn').forEach(el=>el.addEventListener('click',()=>{sDay=parseInt(el.dataset.d);dayUI();}));
