@@ -1,1 +1,1120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pense-Bête</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#B85C3A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pense-Bête">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F6F1E8;
+      --card: #FEFCF7;
+      --card-shadow: rgba(80,50,20,0.10);
+      --accent: #B85C3A;
+      --accent2: #E8845E;
+      --text: #2A1F14;
+      --text-muted: #8A7560;
+      --border: #E2D9CC;
+      --cat-red: #E05252;
+      --cat-orange: #E07B2A;
+      --cat-yellow: #D4A017;
+      --cat-green: #3A9E6A;
+      --cat-blue: #3A6FBE;
+      --cat-purple: #7B52B8;
+      --prio-high: #E05252;
+      --prio-mid: #E07B2A;
+      --prio-low: #3A9E6A;
+      --radius: 14px;
+      --font-head: 'Fraunces', Georgia, serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--accent);
+      padding: 52px 20px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .header-title {
+      font-family: var(--font-head);
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .header-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 2px;
+    }
+    .btn-add {
+      background: rgba(255,255,255,0.2);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: #fff;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .btn-add:active { transform: scale(0.92); background: rgba(255,255,255,0.35); }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 14px 20px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      color: var(--text-muted);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── NOTE LIST ── */
+    .note-list {
+      padding: 6px 20px 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-family: var(--font-head); font-size: 20px; color: var(--text); margin-bottom: 6px; }
+    .empty-text { font-size: 14px; line-height: 1.5; }
+
+    /* ── NOTE CARD ── */
+    .note-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 10px var(--card-shadow);
+      overflow: hidden;
+      display: flex;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .note-card:active { transform: scale(0.98); }
+    .note-stripe {
+      width: 5px;
+      flex-shrink: 0;
+    }
+    .note-body {
+      flex: 1;
+      padding: 14px 14px 12px;
+      min-width: 0;
+    }
+    .note-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .prio-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cat-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+    .reminder-badge {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 3px;
+      margin-left: auto;
+    }
+    .note-title {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .note-preview {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .note-actions {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 10px 8px 4px;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      padding: 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 16px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .icon-btn:hover { background: var(--bg); }
+    .icon-btn.delete:hover { color: #E05252; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(30,20,10,0.55);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      background: var(--card);
+      width: 100%;
+      border-radius: 22px 22px 0 0;
+      max-height: 92dvh;
+      overflow-y: auto;
+      padding: 0 0 40px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+    }
+    .modal-title {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .btn-close {
+      background: var(--bg);
+      border: none;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-body { padding: 0 20px; }
+
+    .field { margin-bottom: 18px; }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+      display: block;
+    }
+    .field input[type="text"],
+    .field input[type="time"],
+    .field select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+
+    /* Rich text editor */
+    .editor-toolbar {
+      display: flex;
+      gap: 4px;
+      padding: 6px 8px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+    }
+    .toolbar-btn {
+      background: none;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-weight: 600;
+      transition: background 0.15s, color 0.15s;
+    }
+    .toolbar-btn:hover, .toolbar-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .editor-content {
+      min-height: 120px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 0 0 10px 10px;
+      font-family: var(--font-body);
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+    }
+    .editor-content:focus { border-color: var(--accent); }
+    .editor-content[contenteditable]:empty:before {
+      content: attr(data-placeholder);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Chips */
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.15s;
+    }
+    .chip.prio-chip {
+      background: var(--bg);
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+    .chip.prio-chip.active[data-prio="high"] { background: #FDECEC; border-color: var(--prio-high); color: var(--prio-high); }
+    .chip.prio-chip.active[data-prio="mid"] { background: #FDF2E8; border-color: var(--prio-mid); color: var(--prio-mid); }
+    .chip.prio-chip.active[data-prio="low"] { background: #E8F7EE; border-color: var(--prio-low); color: var(--prio-low); }
+
+    /* Category circles */
+    .cat-circles {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .cat-circle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .cat-dot {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      border: 3px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .cat-circle.active .cat-dot {
+      border-color: var(--text);
+      transform: scale(1.15);
+    }
+    .cat-name {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Reminder section */
+    .reminder-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .reminder-toggle-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 500;
+    }
+    .toggle-switch {
+      width: 42px; height: 24px;
+      background: var(--border);
+      border-radius: 12px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-switch.on { background: var(--accent); }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.on::after { left: 21px; }
+
+    .reminder-options {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .reminder-row {
+      display: flex;
+      gap: 10px;
+    }
+    .reminder-row > * { flex: 1; }
+
+    .day-chips {
+      display: flex;
+      gap: 6px;
+    }
+    .day-chip {
+      flex: 1;
+      text-align: center;
+      padding: 7px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: var(--bg);
+      transition: all 0.15s;
+    }
+    .day-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Save button */
+    .btn-save {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 15px;
+      border-radius: 12px;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-save:active { transform: scale(0.98); background: #a04e2e; }
+
+    /* ── NOTIFICATION TOAST ── */
+    .toast {
+      position: fixed;
+      top: 20px; left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--text);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 999;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.reminder { background: var(--accent); }
+
+    /* ── PERMISSION BANNER ── */
+    .notif-banner {
+      background: #FDF2E8;
+      border: 1.5px solid #E07B2A;
+      border-radius: 12px;
+      margin: 10px 20px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #8A5020;
+    }
+    .notif-banner-text { flex: 1; line-height: 1.4; }
+    .btn-allow {
+      background: #E07B2A;
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: var(--font-body);
+    }
+    .notif-banner.hidden { display: none; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 0; }
+
+    @media (min-width: 480px) {
+      .modal { max-width: 480px; margin: auto; border-radius: 22px; margin-bottom: 20px; }
+      .modal-overlay { align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <div class="header-title">🗒️ Pense-Bête</div>
+    <div class="header-sub" id="note-count">Chargement…</div>
+  </div>
+  <button class="btn-add" id="btn-add" aria-label="Ajouter une note">+</button>
+</header>
+
+<div class="notif-banner hidden" id="notif-banner">
+  <span>🔔</span>
+  <span class="notif-banner-text">Autorise les notifications pour recevoir tes rappels</span>
+  <button class="btn-allow" id="btn-allow">Autoriser</button>
+</div>
+
+<div class="filter-bar" id="filter-bar">
+  <div class="filter-chip active" data-filter="all">Toutes</div>
+  <div class="filter-chip" data-filter="high">🔴 Haute</div>
+  <div class="filter-chip" data-filter="mid">🟠 Moyenne</div>
+  <div class="filter-chip" data-filter="low">🟢 Basse</div>
+  <div class="filter-chip" data-filter="cat-red">● Personnel</div>
+  <div class="filter-chip" data-filter="cat-orange">● Travail</div>
+  <div class="filter-chip" data-filter="cat-yellow">● Finances</div>
+  <div class="filter-chip" data-filter="cat-green">● Santé</div>
+  <div class="filter-chip" data-filter="cat-blue">● Famille</div>
+  <div class="filter-chip" data-filter="cat-purple">● Loisirs</div>
+</div>
+
+<div class="note-list" id="note-list"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Nouvelle note</span>
+      <button class="btn-close" id="btn-close">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field">
+        <label class="field-label">Titre</label>
+        <input type="text" id="note-title" placeholder="Titre de la note…" maxlength="80">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Note</label>
+        <div class="editor-toolbar">
+          <button class="toolbar-btn" data-cmd="bold"><b>B</b></button>
+          <button class="toolbar-btn" data-cmd="italic"><i>I</i></button>
+          <button class="toolbar-btn" data-cmd="underline"><u>U</u></button>
+          <button class="toolbar-btn" data-cmd="insertUnorderedList">☰</button>
+          <button class="toolbar-btn" data-cmd="insertOrderedList">1.</button>
+          <button class="toolbar-btn" data-cmd="removeFormat" title="Effacer format">Ø</button>
+        </div>
+        <div class="editor-content" id="note-body" contenteditable="true" data-placeholder="Écris ta note ici…"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Priorité</label>
+        <div class="chips">
+          <div class="chip prio-chip" data-prio="high">🔴 Haute</div>
+          <div class="chip prio-chip active" data-prio="mid">🟠 Moyenne</div>
+          <div class="chip prio-chip" data-prio="low">🟢 Basse</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Catégorie</label>
+        <div class="cat-circles" id="cat-circles">
+          <div class="cat-circle active" data-cat="cat-red">
+            <div class="cat-dot" style="background:var(--cat-red)">👤</div>
+            <span class="cat-name">Personnel</span>
+          </div>
+          <div class="cat-circle" data-cat="cat-orange">
+            <div class="cat-dot" style="background:var(--cat-orange)">💼</div>
+            <span class="cat-name">Travail</span>
+          </div>
+          <div class="cat-circle" data-cat="cat-yellow">
+            <div class="cat-dot" style="background:var(--cat-yellow)">💰</div>
+            <span class="cat-name">Finances</span>
+          </div>
+          <div class="cat-circle" data-cat="cat-green">
+            <div class="cat-dot" style="background:var(--cat-green)">🌿</div>
+            <span class="cat-name">Santé</span>
+          </div>
+          <div class="cat-circle" data-cat="cat-blue">
+            <div class="cat-dot" style="background:var(--cat-blue)">🏡</div>
+            <span class="cat-name">Famille</span>
+          </div>
+          <div class="cat-circle" data-cat="cat-purple">
+            <div class="cat-dot" style="background:var(--cat-purple)">🎮</div>
+            <span class="cat-name">Loisirs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Rappel récurrent</label>
+        <div class="reminder-toggle" id="reminder-toggle">
+          <span class="reminder-toggle-label">🔔 Activer un rappel</span>
+          <div class="toggle-switch" id="toggle-switch"></div>
+        </div>
+        <div class="reminder-options" id="reminder-options" style="display:none">
+          <div class="reminder-row">
+            <div>
+              <label class="field-label" style="margin-top:4px">Fréquence</label>
+              <select id="reminder-freq">
+                <option value="daily">Quotidien</option>
+                <option value="weekly">Hebdomadaire</option>
+                <option value="monthly">Mensuel</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" style="margin-top:4px">Heure</label>
+              <input type="time" id="reminder-time" value="09:00">
+            </div>
+          </div>
+          <div id="weekly-options" style="display:none">
+            <label class="field-label">Jour</label>
+            <div class="day-chips">
+              <div class="day-chip" data-day="1">Lun</div>
+              <div class="day-chip" data-day="2">Mar</div>
+              <div class="day-chip" data-day="3">Mer</div>
+              <div class="day-chip" data-day="4">Jeu</div>
+              <div class="day-chip" data-day="5">Ven</div>
+              <div class="day-chip" data-day="6">Sam</div>
+              <div class="day-chip active" data-day="0">Dim</div>
+            </div>
+          </div>
+          <div id="monthly-options" style="display:none">
+            <label class="field-label">Jour du mois</label>
+            <input type="number" id="reminder-day-of-month" min="1" max="28" value="1"
+              style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font-body);font-size:15px;background:var(--bg);color:var(--text);outline:none;">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-save" id="btn-save">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────
+  const STORAGE_KEY = 'pensebete_notes_v1';
+  const CAT_META = {
+    'cat-red':    { name: 'Personnel', color: '#E05252', icon: '👤' },
+    'cat-orange': { name: 'Travail',   color: '#E07B2A', icon: '💼' },
+    'cat-yellow': { name: 'Finances',  color: '#D4A017', icon: '💰' },
+    'cat-green':  { name: 'Santé',     color: '#3A9E6A', icon: '🌿' },
+    'cat-blue':   { name: 'Famille',   color: '#3A6FBE', icon: '🏡' },
+    'cat-purple': { name: 'Loisirs',   color: '#7B52B8', icon: '🎮' },
+  };
+  const PRIO_META = {
+    high: { label: 'Haute',   color: '#E05252', dot: '🔴' },
+    mid:  { label: 'Moyenne', color: '#E07B2A', dot: '🟠' },
+    low:  { label: 'Basse',   color: '#3A9E6A', dot: '🟢' },
+  };
+
+  let notes = [];
+  let editingId = null;
+  let currentFilter = 'all';
+  let reminderEnabled = false;
+  let selectedPrio = 'mid';
+  let selectedCat = 'cat-red';
+  let selectedDay = 0;
+  let reminderTimers = [];
+
+  function loadNotes() {
+    try { notes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { notes = []; }
+  }
+  function saveNotes() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  }
+  function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  // ── RENDER ────────────────────────────────────────────
+  function render() {
+    const list = document.getElementById('note-list');
+    const count = document.getElementById('note-count');
+
+    let filtered = notes.filter(n => {
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'high') return n.priority === 'high';
+      if (currentFilter === 'mid') return n.priority === 'mid';
+      if (currentFilter === 'low') return n.priority === 'low';
+      return n.category === currentFilter;
+    });
+
+    const prioOrder = { high: 0, mid: 1, low: 2 };
+    filtered.sort((a, b) => prioOrder[a.priority] - prioOrder[b.priority]);
+
+    count.textContent = `${filtered.length} note${filtered.length !== 1 ? 's' : ''}`;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">Aucune note</div>
+          <div class="empty-text">Appuie sur + pour créer ta première note</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(n => {
+      const cat = CAT_META[n.category] || CAT_META['cat-red'];
+      const prio = PRIO_META[n.priority] || PRIO_META['mid'];
+      const preview = n.body ? n.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      const reminderText = n.reminder ? formatReminder(n) : '';
+      return `
+        <div class="note-card" data-id="${n.id}">
+          <div class="note-stripe" style="background:${cat.color}"></div>
+          <div class="note-body" onclick="openEdit('${n.id}')">
+            <div class="note-meta">
+              <div class="prio-dot" style="background:${prio.color}"></div>
+              <span class="cat-badge" style="background:${cat.color}">${cat.icon} ${cat.name}</span>
+              ${reminderText ? `<span class="reminder-badge">🔔 ${reminderText}</span>` : ''}
+            </div>
+            <div class="note-title">${escHtml(n.title || 'Sans titre')}</div>
+            ${preview ? `<div class="note-preview">${escHtml(preview)}</div>` : ''}
+          </div>
+          <div class="note-actions">
+            <button class="icon-btn" onclick="openEdit('${n.id}')" title="Modifier">✏️</button>
+            <button class="icon-btn delete" onclick="deleteNote('${n.id}')" title="Supprimer">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function formatReminder(n) {
+    const freq = { daily: 'Quotidien', weekly: 'Hebdo', monthly: 'Mensuel' };
+    return `${freq[n.reminderFreq] || ''} ${n.reminderTime || ''}`;
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── MODAL ─────────────────────────────────────────────
+  function openModal(id) {
+    editingId = id || null;
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-title').textContent = id ? 'Modifier la note' : 'Nouvelle note';
+
+    if (id) {
+      const n = notes.find(x => x.id === id);
+      document.getElementById('note-title').value = n.title || '';
+      document.getElementById('note-body').innerHTML = n.body || '';
+      setSelectedPrio(n.priority || 'mid');
+      setSelectedCat(n.category || 'cat-red');
+      if (n.reminder) {
+        setReminder(true);
+        document.getElementById('reminder-freq').value = n.reminderFreq || 'daily';
+        document.getElementById('reminder-time').value = n.reminderTime || '09:00';
+        selectedDay = n.reminderDay ?? 0;
+        document.getElementById('reminder-day-of-month').value = n.reminderDayOfMonth || 1;
+        updateFreqUI(n.reminderFreq || 'daily');
+        updateDayChips();
+      } else {
+        setReminder(false);
+      }
+    } else {
+      document.getElementById('note-title').value = '';
+      document.getElementById('note-body').innerHTML = '';
+      setSelectedPrio('mid');
+      setSelectedCat('cat-red');
+      setReminder(false);
+      document.getElementById('reminder-freq').value = 'daily';
+      document.getElementById('reminder-time').value = '09:00';
+      selectedDay = 0;
+      document.getElementById('reminder-day-of-month').value = 1;
+      updateFreqUI('daily');
+      updateDayChips();
+    }
+
+    overlay.classList.add('open');
+    setTimeout(() => document.getElementById('note-title').focus(), 350);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function openEdit(id) { openModal(id); }
+
+  function setSelectedPrio(p) {
+    selectedPrio = p;
+    document.querySelectorAll('.prio-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.prio === p);
+    });
+  }
+
+  function setSelectedCat(c) {
+    selectedCat = c;
+    document.querySelectorAll('.cat-circle').forEach(el => {
+      el.classList.toggle('active', el.dataset.cat === c);
+    });
+  }
+
+  function setReminder(on) {
+    reminderEnabled = on;
+    document.getElementById('toggle-switch').classList.toggle('on', on);
+    document.getElementById('reminder-options').style.display = on ? 'flex' : 'none';
+    document.getElementById('reminder-options').style.flexDirection = 'column';
+  }
+
+  function updateFreqUI(freq) {
+    document.getElementById('weekly-options').style.display = freq === 'weekly' ? 'block' : 'none';
+    document.getElementById('monthly-options').style.display = freq === 'monthly' ? 'block' : 'none';
+  }
+
+  function updateDayChips() {
+    document.querySelectorAll('.day-chip').forEach(c => {
+      c.classList.toggle('active', parseInt(c.dataset.day) === selectedDay);
+    });
+  }
+
+  // ── SAVE ──────────────────────────────────────────────
+  function saveNote() {
+    const title = document.getElementById('note-title').value.trim();
+    const body  = document.getElementById('note-body').innerHTML.trim();
+    if (!title && !body) { showToast('Écris quelque chose d'abord !'); return; }
+
+    const n = {
+      id: editingId || genId(),
+      title, body,
+      priority: selectedPrio,
+      category: selectedCat,
+      reminder: reminderEnabled,
+      reminderFreq: document.getElementById('reminder-freq').value,
+      reminderTime: document.getElementById('reminder-time').value,
+      reminderDay: selectedDay,
+      reminderDayOfMonth: parseInt(document.getElementById('reminder-day-of-month').value) || 1,
+      createdAt: editingId ? (notes.find(x=>x.id===editingId)?.createdAt || Date.now()) : Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    if (editingId) {
+      const idx = notes.findIndex(x => x.id === editingId);
+      notes[idx] = n;
+    } else {
+      notes.unshift(n);
+    }
+
+    saveNotes();
+    closeModal();
+    render();
+    scheduleAllReminders();
+    showToast(editingId ? '✅ Note mise à jour' : '✅ Note enregistrée');
+  }
+
+  // ── DELETE ────────────────────────────────────────────
+  function deleteNote(id) {
+    if (!confirm('Supprimer cette note ?')) return;
+    notes = notes.filter(n => n.id !== id);
+    saveNotes();
+    render();
+    showToast('🗑️ Note supprimée');
+  }
+
+  // ── REMINDERS ─────────────────────────────────────────
+  function scheduleAllReminders() {
+    reminderTimers.forEach(clearTimeout);
+    reminderTimers = [];
+
+    if (Notification.permission !== 'granted') return;
+
+    notes.filter(n => n.reminder).forEach(n => {
+      scheduleNote(n);
+    });
+  }
+
+  function scheduleNote(n) {
+    const next = getNextReminderTime(n);
+    if (!next) return;
+    const delay = next - Date.now();
+    if (delay <= 0) return;
+    const maxDelay = 2147483647; // max setTimeout
+    if (delay > maxDelay) return;
+    const t = setTimeout(() => {
+      fireReminder(n);
+      // Re-schedule after 1s for recurring
+      setTimeout(() => {
+        const updated = notes.find(x => x.id === n.id);
+        if (updated && updated.reminder) scheduleNote(updated);
+      }, 1000);
+    }, delay);
+    reminderTimers.push(t);
+  }
+
+  function getNextReminderTime(n) {
+    const [h, m] = (n.reminderTime || '09:00').split(':').map(Number);
+    const now = new Date();
+    let next = new Date();
+    next.setSeconds(0, 0);
+    next.setHours(h, m);
+
+    if (n.reminderFreq === 'daily') {
+      if (next <= now) next.setDate(next.getDate() + 1);
+    } else if (n.reminderFreq === 'weekly') {
+      const target = n.reminderDay ?? 0;
+      let tries = 0;
+      while ((next.getDay() !== target || next <= now) && tries < 8) {
+        next.setDate(next.getDate() + 1);
+        tries++;
+      }
+      next.setHours(h, m, 0, 0);
+    } else if (n.reminderFreq === 'monthly') {
+      const dom = n.reminderDayOfMonth || 1;
+      next.setDate(dom);
+      if (next <= now) {
+        next.setMonth(next.getMonth() + 1);
+        next.setDate(dom);
+      }
+      next.setHours(h, m, 0, 0);
+    }
+    return next;
+  }
+
+  function fireReminder(n) {
+    const cat = CAT_META[n.category] || CAT_META['cat-red'];
+    const body = n.body ? n.body.replace(/<[^>]+>/g, '').slice(0, 100) : '';
+    if (Notification.permission === 'granted') {
+      try {
+        new Notification(`🔔 ${n.title || 'Rappel'}`, {
+          body: body || cat.name,
+          icon: 'icon-192.png',
+          badge: 'icon-192.png',
+          tag: n.id,
+        });
+      } catch(e) { showToast(`🔔 ${n.title}`, true); }
+    } else {
+      showToast(`🔔 ${n.title}`, true);
+    }
+  }
+
+  // Check missed reminders on load
+  function checkMissedReminders() {
+    const lastCheck = parseInt(localStorage.getItem('pensebete_lastcheck') || '0');
+    const now = Date.now();
+    if (lastCheck === 0) { localStorage.setItem('pensebete_lastcheck', now); return; }
+
+    notes.filter(n => n.reminder).forEach(n => {
+      const next = getNextReminderTime(n);
+      if (!next) return;
+      // Fire immediately for reminders missed in the last 10 minutes
+      const last = new Date(lastCheck);
+      const missed = new Date(next);
+      missed.setDate(missed.getDate() - (n.reminderFreq === 'daily' ? 1 : n.reminderFreq === 'weekly' ? 7 : 30));
+      if (missed > last && missed <= new Date(now - 1000)) {
+        fireReminder(n);
+      }
+    });
+
+    localStorage.setItem('pensebete_lastcheck', now);
+  }
+
+  // ── NOTIFICATIONS ─────────────────────────────────────
+  function checkNotifPermission() {
+    if (!('Notification' in window)) return;
+    const banner = document.getElementById('notif-banner');
+    if (Notification.permission === 'default') {
+      banner.classList.remove('hidden');
+    } else if (Notification.permission === 'granted') {
+      banner.classList.add('hidden');
+    }
+  }
+
+  // ── TOAST ─────────────────────────────────────────────
+  function showToast(msg, isReminder) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isReminder ? ' reminder' : '') + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── EVENT LISTENERS ───────────────────────────────────
+  document.getElementById('btn-add').addEventListener('click', () => openModal(null));
+  document.getElementById('btn-close').addEventListener('click', closeModal);
+  document.getElementById('btn-save').addEventListener('click', saveNote);
+
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  // Prio chips
+  document.querySelectorAll('.prio-chip').forEach(c => {
+    c.addEventListener('click', () => setSelectedPrio(c.dataset.prio));
+  });
+
+  // Cat circles
+  document.querySelectorAll('.cat-circle').forEach(c => {
+    c.addEventListener('click', () => setSelectedCat(c.dataset.cat));
+  });
+
+  // Reminder toggle
+  document.getElementById('reminder-toggle').addEventListener('click', () => setReminder(!reminderEnabled));
+
+  // Freq select
+  document.getElementById('reminder-freq').addEventListener('change', e => updateFreqUI(e.target.value));
+
+  // Day chips
+  document.querySelectorAll('.day-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      selectedDay = parseInt(c.dataset.day);
+      updateDayChips();
+    });
+  });
+
+  // Filter chips
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      currentFilter = c.dataset.filter;
+      render();
+    });
+  });
+
+  // Rich text toolbar
+  document.querySelectorAll('.toolbar-btn').forEach(btn => {
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      document.execCommand(btn.dataset.cmd, false, null);
+      document.getElementById('note-body').focus();
+    });
+  });
+
+  // Notification allow
+  document.getElementById('btn-allow').addEventListener('click', async () => {
+    const result = await Notification.requestPermission();
+    if (result === 'granted') {
+      document.getElementById('notif-banner').classList.add('hidden');
+      scheduleAllReminders();
+      showToast('✅ Notifications activées !');
+    }
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (document.getElementById('modal-overlay').classList.contains('open')) saveNote();
+    }
+  });
+
+  // ── SERVICE WORKER ────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(console.warn);
+  }
+
+  // ── INIT ──────────────────────────────────────────────
+  loadNotes();
+  render();
+  checkNotifPermission();
+  checkMissedReminders();
+  scheduleAllReminders();
+
+  // Update lastCheck every minute
+  setInterval(() => localStorage.setItem('pensebete_lastcheck', Date.now()), 60000);
+</script>
+</body>
+</html>
 
