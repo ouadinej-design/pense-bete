@@ -714,7 +714,7 @@ function saveH(){localStorage.setItem(HK,JSON.stringify(habits));}
 function saveL(){localStorage.setItem(LK,JSON.stringify(habitLogs));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function today(){return new Date().toISOString().slice(0,10);}
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 
 // ══════════════════════════════════════════════
 // NATURAL LANGUAGE DATE PARSING
@@ -906,11 +906,12 @@ const ROUTINES=[
   {key:'soir',   label:'Soir',       ico:'🌙'},
 ];
 
+function localDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getStreak(hid){
-  let streak=0; const d=new Date();
+  let streak=0;
   for(let i=0;i<365;i++){
-    const k=`${hid}_${new Date(d.getTime()-i*86400000).toISOString().slice(0,10)}`;
-    if(habitLogs[k])streak++;
+    const d=new Date(); d.setDate(d.getDate()-i);
+    if(habitLogs[`${hid}_${localDate(d)}`])streak++;
     else if(i>0)break;
   }
   return streak;
@@ -926,7 +927,8 @@ function getWeeklyRate(){
   if(!habits.length)return 0;
   let tot=0,done=0;
   for(let i=0;i<7;i++){
-    const ds=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=localDate(d);
     habits.forEach(h=>{tot++;if(isDoneH(h,ds))done++;});
   }
   return tot?Math.round(done/tot*100):0;
@@ -940,12 +942,12 @@ function renderHabits(){
   const maxStreak=habits.reduce((mx,h)=>Math.max(mx,getStreak(h.id)),0);
   const CIRC=263.9;
 
-  // Ring
+  // Ring — use setAttribute for reliable SVG on mobile
   document.getElementById('h-ring-pct').textContent=pctToday+'%';
   const fill=document.getElementById('h-ring-fill');
-  fill.style.strokeDashoffset=CIRC*(1-pctToday/100);
-  // ring color by completion
-  fill.style.stroke=pctToday>=100?'#4ADE80':pctToday>=50?'var(--lime)':'#FF8A35';
+  const ringColor=pctToday>=100?'#4ADE80':pctToday>=50?'#C8FF47':'#FF8A35';
+  fill.setAttribute('stroke-dashoffset', String(CIRC*(1-pctToday/100)));
+  fill.setAttribute('stroke', ringColor);
 
   // Mini stats
   document.getElementById('h-hero-stats').innerHTML=`
@@ -967,8 +969,8 @@ function renderHabits(){
   const chart=document.getElementById('h-chart');
   const days=['D','L','M','M','J','V','S'];
   const bars=Array.from({length:7},(_,i)=>{
-    const d=new Date(Date.now()-(6-i)*86400000);
-    const ds=d.toISOString().slice(0,10);
+    const d=new Date(); d.setDate(d.getDate()-(6-i));
+    const ds=localDate(d);
     let pct=0;
     if(habits.length){
       let t=0,ok=0;
@@ -995,7 +997,8 @@ function renderHabits(){
       const catHabits=habits.filter(h=>(h.category||'health')===c);
       let tot=0,done=0;
       for(let i=0;i<7;i++){
-        const ds=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+        const d=new Date(); d.setDate(d.getDate()-i);
+        const ds=localDate(d);
         catHabits.forEach(h=>{tot++;if(isDoneH(h,ds))done++;});
       }
       const pct=tot?Math.round(done/tot*100):0;
@@ -1080,40 +1083,43 @@ function renderHabits(){
     </div>`;
   }).join('');
 
-  // Events — check (non-counter)
-  sec.querySelectorAll('.h-check[data-hid]').forEach(el=>el.addEventListener('click',e=>{
-    e.stopPropagation();
-    const h=habits.find(x=>x.id===el.dataset.hid);
-    if(!h||h.type==='counter')return;
-    const cur=getLogVal(h.id,td);
-    setLogVal(h.id,td,cur?0:1);
-    renderHabits();
-    toast(cur?'↩️ Annulé':'✅ Fait !');
-  }));
-  // Events — counter +
-  sec.querySelectorAll('.h-inc').forEach(el=>el.addEventListener('click',e=>{
-    e.stopPropagation();
-    const h=habits.find(x=>x.id===el.dataset.hid);if(!h)return;
-    const cur=getLogVal(h.id,td);
-    if(cur<(h.goal||1)*2)setLogVal(h.id,td,cur+1);
-    if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
-    renderHabits();
-  }));
-  // Events — counter -
-  sec.querySelectorAll('.h-dec').forEach(el=>el.addEventListener('click',e=>{
-    e.stopPropagation();
-    const h=habits.find(x=>x.id===el.dataset.hid);if(!h)return;
-    const cur=getLogVal(h.id,td);
-    if(cur>0)setLogVal(h.id,td,cur-1);
-    renderHabits();
-  }));
-  // Events — tap card body to edit (only non-interactive areas)
-  sec.querySelectorAll('.h-item[data-hid]').forEach(el=>{
-    el.addEventListener('click',e=>{
-      // ignore clicks on interactive children
-      if(e.target.closest('.h-check,.h-counter,.h-cnt-btn'))return;
-      openHabitSheet(el.dataset.hid);
-    });
+  // ── EVENT DELEGATION — single listener, reliable on all mobile browsers ──
+  sec.addEventListener('click', function handler(e){
+    const td2=today();
+
+    // + button (counter increment)
+    const incBtn=e.target.closest('.h-inc');
+    if(incBtn){
+      const h=habits.find(x=>x.id===incBtn.dataset.hid); if(!h)return;
+      const cur=getLogVal(h.id,td2);
+      if(cur<(h.goal||1)*3)setLogVal(h.id,td2,cur+1);
+      if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
+      renderHabits(); return;
+    }
+    // - button (counter decrement)
+    const decBtn=e.target.closest('.h-dec');
+    if(decBtn){
+      const h=habits.find(x=>x.id===decBtn.dataset.hid); if(!h)return;
+      const cur=getLogVal(h.id,td2);
+      if(cur>0)setLogVal(h.id,td2,cur-1);
+      renderHabits(); return;
+    }
+    // check circle (non-counter toggle)
+    const chk=e.target.closest('.h-check[data-hid]');
+    if(chk){
+      const h=habits.find(x=>x.id===chk.dataset.hid); if(!h)return;
+      if(h.type==='counter')return; // counter uses + / - only
+      const cur=getLogVal(h.id,td2);
+      setLogVal(h.id,td2,cur?0:1);
+      renderHabits();
+      toast(cur?'↩️ Annulé':'✅ Fait !');
+      return;
+    }
+    // tap on card body → edit (only if no interactive child was hit)
+    const item=e.target.closest('.h-item[data-hid]');
+    if(item&&!e.target.closest('.h-counter')){
+      openHabitSheet(item.dataset.hid);
+    }
   });
 }
 
@@ -1432,7 +1438,6 @@ function schedAll(){
 }
 
 function checkMissedHabitReminders(){
-  // On app open, fire any habit reminder whose time passed today and habit not yet done
   if(Notification.permission!=='granted')return;
   const now=new Date();
   const td=today();
@@ -1440,11 +1445,11 @@ function checkMissedHabitReminders(){
     if(!h.reminderTime)return;
     const[hh,mm]=h.reminderTime.split(':').map(Number);
     const remTime=new Date(); remTime.setHours(hh,mm,0,0);
-    const missedWindow=5*60*1000; // fired if missed within last 5 min
     const diff=now-remTime;
-    if(diff>=0&&diff<=missedWindow){
+    if(diff>=0&&diff<=5*60*1000){
       const goal=h.type==='counter'?(h.goal||1):1;
-      if(getLogVal(h.id,td)<goal)fireNotif({id:h.id,title:'🔔 '+h.name,body:h.type==='counter'?`Objectif : ${goal} ${h.unit||''}`:'',category:h.category});
+      if(getLogVal(h.id,td)<goal)
+        fireNotif({id:h.id,title:'🔔 '+h.name,body:h.type==='counter'?`Objectif : ${goal} ${h.unit||''}`:'',category:h.category});
     }
   });
 }
