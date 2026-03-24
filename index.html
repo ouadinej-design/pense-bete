@@ -386,7 +386,13 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
     <div class="tab-header">
       <div class="header-row">
         <div><div class="eyebrow">MES NOTES</div><div class="tab-title">Mémo Pro</div></div>
-        <div class="stat-box"><div class="stat-n" id="sn">0</div><div class="stat-l" id="sl">note</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button data-action="export-backup" type="button" style="background:var(--card2);border:1.5px solid var(--b2);color:var(--t2);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Sauvegarder">💾</button>
+          <label style="background:var(--card2);border:1.5px solid var(--b2);color:var(--t2);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Restaurer">
+            📂<input type="file" id="import-file" accept=".json" style="display:none">
+          </label>
+          <div class="stat-box"><div class="stat-n" id="sn">0</div><div class="stat-l" id="sl">note</div></div>
+        </div>
       </div>
     </div>
     <div class="notif-bar hide" id="nb">
@@ -1678,6 +1684,13 @@ document.getElementById('pm-work').addEventListener('click',()=>setPomoMode('wor
 document.getElementById('pm-break').addEventListener('click',()=>setPomoMode('break'));
 document.getElementById('pm-long').addEventListener('click',()=>setPomoMode('long'));
 
+document.addEventListener('click',function(e){
+  if(e.target.closest('[data-action="export-backup"]'))exportBackup();
+});
+document.getElementById('import-file').addEventListener('change',function(){
+  importBackup(this.files[0]);
+  this.value='';
+});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeSheet();closeHabitSheet();document.getElementById('tp-ov').classList.remove('open');}
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&document.getElementById('ov').classList.contains('open'))saveNote();
@@ -1686,10 +1699,51 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════════
 // SERVICE WORKER + INIT
 // ══════════════════════════════════════════════
-if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()=>{
-  // Once SW is active, send full reminder schedule
-  navigator.serviceWorker.ready.then(()=>setTimeout(sendRemindersToSW, 1000));
-}).catch(()=>{});
+// ══════════════════════════════════════════════
+// BACKUP / RESTORE
+// ══════════════════════════════════════════════
+function exportBackup(){
+  const data={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    notes, habits, habitLogs
+  };
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date();
+  const ds=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  a.href=url; a.download=`memopro-backup-${ds}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast('💾 Sauvegarde téléchargée !');
+}
+
+function importBackup(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.notes&&!data.habits){toast('❌ Fichier invalide');return;}
+      if(!confirm(`Restaurer ${(data.notes||[]).length} notes et ${(data.habits||[]).length} habitudes ?\nLes données actuelles seront remplacées.`))return;
+      notes=data.notes||[];
+      habits=data.habits||[];
+      habitLogs=data.habitLogs||{};
+      save(); saveH(); saveL();
+      renderNotes(); renderAgenda(); renderHabits(); schedAll(); sendRemindersToSW();
+      toast('✅ Données restaurées !');
+    }catch(err){toast('❌ Erreur de lecture');}
+  };
+  reader.readAsText(file);
+}
+
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>{
+    navigator.serviceWorker.ready.then(()=>setTimeout(sendRemindersToSW,1000));
+  }).catch(()=>{});
+}
 
 // Re-schedule timers when app becomes visible again (after sleep/close)
 document.addEventListener('visibilitychange',()=>{
@@ -1701,7 +1755,6 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 load(); renderNotes(); chkNotif(); schedAll(); checkAllMissedReminders(); initVoice(); updatePomoUI(); initHabitEvents();
-// DEBUG — remove after fix confirmed
 </script>
 </body>
 </html>
