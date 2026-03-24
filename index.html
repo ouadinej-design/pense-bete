@@ -1085,17 +1085,21 @@ function getCatLabel(c){return HCATS[c]?.label||c;}
 // ── HABIT EVENTS — attached ONCE at init, never inside renderHabits ──
 // ── GLOBAL HABIT ACTIONS (called via onclick in HTML) ──
 function habitCheck(hid){
-  const h=habits.find(x=>x.id===hid); if(!h)return;
+  const h=habits.find(x=>x.id===hid);
+  if(!h){dbg('NOT FOUND: '+hid);return;}
   const td=today();
   const cur=getLogVal(h.id,td);
+  dbg('CHECK '+h.name+' cur='+cur+' td='+td);
   setLogVal(h.id,td,cur?0:1);
   renderHabits();
   toast(cur?'↩️ Annulé':'✅ Fait !');
 }
 function habitInc(hid){
-  const h=habits.find(x=>x.id===hid); if(!h)return;
+  const h=habits.find(x=>x.id===hid);
+  if(!h){dbg('NOT FOUND: '+hid);return;}
   const td=today();
   const cur=getLogVal(h.id,td);
+  dbg('INC '+h.name+' cur='+cur);
   setLogVal(h.id,td,Math.min(cur+1,(h.goal||1)*3));
   if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
   renderHabits();
@@ -1105,6 +1109,16 @@ function habitDec(hid){
   const td=today();
   const cur=getLogVal(h.id,td);
   if(cur>0){setLogVal(h.id,td,cur-1);renderHabits();}
+}
+function dbg(msg){
+  let el=document.getElementById('dbg-panel');
+  if(!el){
+    el=document.createElement('div');
+    el.id='dbg-panel';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;background:#FF0;color:#000;font-size:13px;padding:8px 12px;z-index:9999;max-height:120px;overflow:auto;font-family:monospace';
+    document.body.appendChild(el);
+  }
+  el.innerHTML=msg+'<br>'+el.innerHTML;
 }
 
 function initHabitEvents(){} // kept for compatibility, logic moved to onclick
@@ -1561,6 +1575,8 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 load(); renderNotes(); chkNotif(); schedAll(); checkMissedHabitReminders(); initVoice(); updatePomoUI(); initHabitEvents();
+// DEBUG — remove after fix confirmed
+setTimeout(()=>dbg('INIT: today='+today()+' habits='+habits.length+' logs='+Object.keys(habitLogs).length),500);
 </script>
 </body>
 </html>
