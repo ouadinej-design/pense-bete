@@ -1532,22 +1532,26 @@ function nextRecur(n){
 }
 function fireNotif(n){
   const plain=(n.body||'').replace(/<[^>]+>/g,'').slice(0,100);
-  if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
-    try{new Notification(`🔔 ${n.title||'Rappel'}`,{body:plain||'',tag:n.id,icon:'icon-192.png'});}
-    catch(e){toast(`🔔 ${n.title}`);}
-  }else{toast(`🔔 ${n.title}`);}
+  const title=`🔔 ${n.title||'Rappel'}`;
+  const opts={body:plain||'',icon:'/icon-192.png',badge:'/icon-192.png',tag:String(n.id),data:{url:'/'}};
+  if('serviceWorker'in navigator){
+    navigator.serviceWorker.ready.then(reg=>reg.showNotification(title,opts)).catch(()=>toast(title));
+  } else if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    try{new Notification(title,opts);}catch(e){toast(title);}
+  } else {
+    toast(title);
+  }
 }
 function testNotif(){
-  if(typeof Notification==='undefined'){toast('❌ API non supportée');return;}
-  if(Notification.permission!=='granted'){toast('❌ Permission refusée');return;}
-  try{
-    new Notification('✅ Mémo Pro fonctionne !',{
+  if(!('serviceWorker'in navigator)){toast('❌ SW non supporté');return;}
+  navigator.serviceWorker.ready.then(reg=>{
+    reg.showNotification('✅ Mémo Pro fonctionne !',{
       body:'Les rappels sont bien activés.',
       icon:'/icon-192.png',
-      tag:'test-'+Date.now()
+      tag:'test-notif'
     });
     toast('✅ Notification envoyée !');
-  }catch(e){toast('❌ Erreur: '+e.message);}
+  }).catch(e=>toast('❌ '+e.message));
 }
 
 function chkNotif(){
