@@ -392,6 +392,10 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
     <div class="notif-bar hide" id="nb">
       <span>🔔</span><span><b>Activer les rappels</b> — touche pour autoriser</span><span>→</span>
     </div>
+    <div class="notif-bar hide" id="nb-test" style="justify-content:space-between">
+      <span>🔔 Notifications activées</span>
+      <button onclick="testNotif()" style="background:var(--lime);color:#080808;border:none;padding:5px 12px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">Tester</button>
+    </div>
     <div class="search-wrap">
       <div class="search-box"><span class="search-icon">🔍</span><input id="search-inp" placeholder="Rechercher…" autocomplete="off"></div>
     </div>
@@ -1533,9 +1537,61 @@ function fireNotif(n){
     catch(e){toast(`🔔 ${n.title}`);}
   }else{toast(`🔔 ${n.title}`);}
 }
+function testNotif(){
+  if(typeof Notification==='undefined'){toast('❌ API non supportée');return;}
+  if(Notification.permission!=='granted'){toast('❌ Permission refusée');return;}
+  try{
+    new Notification('✅ Mémo Pro fonctionne !',{
+      body:'Les rappels sont bien activés.',
+      icon:'/icon-192.png',
+      tag:'test-'+Date.now()
+    });
+    toast('✅ Notification envoyée !');
+  }catch(e){toast('❌ Erreur: '+e.message);}
+}
+
 function chkNotif(){
   if(typeof Notification==='undefined')return;
-  if(Notification.permission==='default')document.getElementById('nb').classList.remove('hide');
+  if(Notification.permission==='default'){
+    document.getElementById('nb').classList.remove('hide');
+    document.getElementById('nb-test').classList.add('hide');
+  } else if(Notification.permission==='granted'){
+    document.getElementById('nb').classList.add('hide');
+    document.getElementById('nb-test').classList.remove('hide');
+  } else {
+    // denied — show nothing
+    document.getElementById('nb').classList.add('hide');
+    document.getElementById('nb-test').classList.add('hide');
+  }
+}
+
+// On app open: fire any reminders missed in the last 30 min
+function checkAllMissedReminders(){
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  const now=new Date();
+  const td=today();
+  const nowTs=now.getTime();
+  const window30=30*60*1000;
+
+  // Missed habit reminders
+  habits.forEach(h=>{
+    if(!h.reminderTime)return;
+    const[hh,mm]=h.reminderTime.split(':').map(Number);
+    const t=new Date(); t.setHours(hh,mm,0,0);
+    const diff=nowTs-t.getTime();
+    if(diff>=0&&diff<=window30){
+      const goal=h.type==='counter'?(h.goal||1):1;
+      if(getLogVal(h.id,td)<goal)
+        fireNotif({id:h.id,title:'🔔 '+h.name,body:h.type==='counter'?`Objectif: ${goal} ${h.unit||''}`:'',tag:h.id});
+    }
+  });
+
+  // Missed one-time note reminders
+  notes.filter(n=>n.reminderDate&&!n.reminder).forEach(n=>{
+    const diff=nowTs-new Date(n.reminderDate).getTime();
+    if(diff>=0&&diff<=window30)
+      fireNotif({id:n.id,title:'🗒️ '+(n.title||'Note'),body:(n.body||'').replace(/<[^>]+>/g,'').slice(0,100)});
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -1606,7 +1662,8 @@ document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('mousedown',e=>
 document.getElementById('nb').addEventListener('click',async()=>{
   if(typeof Notification==='undefined'){toast('❌ Notifications non supportées');return;}
   const r=await Notification.requestPermission();
-  if(r==='granted'){document.getElementById('nb').classList.add('hide');schedAll();toast('✅ Notifications activées');}
+  chkNotif();
+  if(r==='granted'){schedAll();sendRemindersToSW();toast('✅ Notifications activées');}
 });
 
 // Pomodoro
@@ -1634,11 +1691,12 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){
     schedAll();
-    checkMissedHabitReminders();
+    checkAllMissedReminders();
+    chkNotif();
   }
 });
 
-load(); renderNotes(); chkNotif(); schedAll(); checkMissedHabitReminders(); initVoice(); updatePomoUI(); initHabitEvents();
+load(); renderNotes(); chkNotif(); schedAll(); checkAllMissedReminders(); initVoice(); updatePomoUI(); initHabitEvents();
 // DEBUG — remove after fix confirmed
 </script>
 </body>
