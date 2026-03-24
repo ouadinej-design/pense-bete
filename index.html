@@ -1245,7 +1245,7 @@ function saveNote(){
     updatedAt:Date.now(),
   };
   if(editId)notes[notes.findIndex(x=>x.id===editId)]=n; else notes.unshift(n);
-  save(); closeSheet(); renderNotes(); renderAgenda(); schedAll();
+  save(); closeSheet(); renderNotes(); renderAgenda(); schedAll(); sendRemindersToSW();
   toast(editId?'✅ Mise à jour':'✅ Note ajoutée');
 }
 function delNote(){
@@ -1459,15 +1459,41 @@ function schedAll(){
 }
 
 function sendRemindersToSW(){
-  if(!('serviceWorker' in navigator)||!navigator.serviceWorker.controller)return;
-  const reminders=habits.filter(h=>h.reminderTime).map(h=>({
-    id: h.id,
-    name: h.name,
-    time: h.reminderTime,
-    goal: h.type==='counter'?(h.goal||1):1,
-    body: h.type==='counter'?`Objectif: ${h.goal||1} ${h.unit||''}`:'',
+  if(!('serviceWorker'in navigator)||!navigator.serviceWorker.controller)return;
+
+  // Habit reminders (recurring daily by time)
+  const habitRem=habits.filter(h=>h.reminderTime).map(h=>({
+    type:'habit',
+    id:h.id,
+    name:h.name,
+    time:h.reminderTime,
+    goal:h.type==='counter'?(h.goal||1):1,
+    body:h.type==='counter'?`Objectif: ${h.goal||1} ${h.unit||''}`:'',
   }));
-  navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_REMINDERS',reminders});
+
+  // Note reminders — one-time (exact timestamp)
+  const noteOneTime=notes.filter(n=>n.reminderDate&&!n.reminder).map(n=>({
+    type:'note-once',
+    id:n.id,
+    name:n.title||'Note',
+    timestamp:new Date(n.reminderDate).getTime(),
+    body:(n.body||'').replace(/<[^>]+>/g,'').slice(0,100),
+  }));
+
+  // Note reminders — recurring (daily/weekly/monthly by time)
+  const noteRecur=notes.filter(n=>n.reminder&&n.reminderTime).map(n=>({
+    type:'note-recur',
+    id:n.id,
+    name:n.title||'Note',
+    time:n.reminderTime,
+    freq:n.reminderFreq||'daily',
+    day:n.reminderDay??0,
+    dom:n.reminderDayOfMonth||1,
+    body:(n.body||'').replace(/<[^>]+>/g,'').slice(0,100),
+  }));
+
+  const all=[...habitRem,...noteOneTime,...noteRecur];
+  navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_REMINDERS',reminders:all});
   navigator.serviceWorker.controller.postMessage({type:'UPDATE_LOGS',logs:habitLogs});
 }
 
@@ -1599,7 +1625,10 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════════
 // SERVICE WORKER + INIT
 // ══════════════════════════════════════════════
-if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(()=>{
+  // Once SW is active, send full reminder schedule
+  navigator.serviceWorker.ready.then(()=>setTimeout(sendRemindersToSW, 1000));
+}).catch(()=>{});
 
 // Re-schedule timers when app becomes visible again (after sleep/close)
 document.addEventListener('visibilitychange',()=>{
