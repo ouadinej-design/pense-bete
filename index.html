@@ -429,7 +429,7 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
   <div class="tab" id="tab-habits">
     <div class="tab-header">
       <div class="eyebrow">MES ROUTINES</div>
-      <div class="tab-title">Habitudes <span style="font-size:11px;color:var(--lime);font-family:var(--bf);font-weight:400">v6</span></div>
+      <div class="tab-title">Habitudes</div>
     </div>
     <div class="scroll">
       <div class="h-hero">
@@ -919,6 +919,9 @@ function setLogVal(hid,ds,val){
   const k=`${hid}_${ds}`;
   if(!val)delete habitLogs[k]; else habitLogs[k]=val;
   saveL();
+  // Keep SW in sync
+  if('serviceWorker'in navigator&&navigator.serviceWorker.controller)
+    navigator.serviceWorker.controller.postMessage({type:'UPDATE_LOGS',logs:habitLogs});
 }
 function isDoneH(h,ds){return getLogVal(h.id,ds)>=(h.type==='counter'?(h.goal||1):1);}
 function getWeeklyRate(){
@@ -1085,21 +1088,17 @@ function getCatLabel(c){return HCATS[c]?.label||c;}
 // ── HABIT EVENTS — attached ONCE at init, never inside renderHabits ──
 // ── GLOBAL HABIT ACTIONS (called via onclick in HTML) ──
 function habitCheck(hid){
-  const h=habits.find(x=>x.id===hid);
-  if(!h){dbg('NOT FOUND: '+hid);return;}
+  const h=habits.find(x=>x.id===hid); if(!h)return;
   const td=today();
   const cur=getLogVal(h.id,td);
-  dbg('CHECK '+h.name+' cur='+cur+' td='+td);
   setLogVal(h.id,td,cur?0:1);
   renderHabits();
   toast(cur?'↩️ Annulé':'✅ Fait !');
 }
 function habitInc(hid){
-  const h=habits.find(x=>x.id===hid);
-  if(!h){dbg('NOT FOUND: '+hid);return;}
+  const h=habits.find(x=>x.id===hid); if(!h)return;
   const td=today();
   const cur=getLogVal(h.id,td);
-  dbg('INC '+h.name+' cur='+cur);
   setLogVal(h.id,td,Math.min(cur+1,(h.goal||1)*3));
   if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
   renderHabits();
@@ -1110,16 +1109,7 @@ function habitDec(hid){
   const cur=getLogVal(h.id,td);
   if(cur>0){setLogVal(h.id,td,cur-1);renderHabits();}
 }
-function dbg(msg){
-  let el=document.getElementById('dbg-panel');
-  if(!el){
-    el=document.createElement('div');
-    el.id='dbg-panel';
-    el.style.cssText='position:fixed;top:0;left:0;right:0;background:#FF0;color:#000;font-size:13px;padding:8px 12px;z-index:9999;max-height:120px;overflow:auto;font-family:monospace';
-    document.body.appendChild(el);
-  }
-  el.innerHTML=msg+'<br>'+el.innerHTML;
-}
+function dbg(){}
 
 function initHabitEvents(){
   // Document-level listener — survives innerHTML replacement, bypasses CSP
@@ -1129,7 +1119,7 @@ function initHabitEvents(){
     const action=btn.dataset.action;
     const hid=btn.dataset.hid;
     const td=today();
-    dbg('ACTION='+action+' hid='+hid);
+
     if(action==='check'){
       const h=habits.find(x=>x.id===hid); if(!h)return;
       const cur=getLogVal(h.id,td);
@@ -1341,10 +1331,11 @@ function schedHabitReminder(h){
   const delay=nx-now;
   if(delay>0&&delay<2147483647){
     remTimers.push(setTimeout(()=>{
-      const td2=new Date().toISOString().slice(0,10);
+      const td2=today(); // ← local date, not UTC
       const v=getLogVal(h.id,td2);
       const goal=h.type==='counter'?(h.goal||1):1;
       if(v<goal)fireNotif({id:h.id,title:h.name,body:h.type==='counter'?`Objectif: ${goal} ${h.unit||''}`:''});
+      // Reschedule for next day
       setTimeout(()=>{const u=habits.find(x=>x.id===h.id);if(u)schedHabitReminder(u);},1200);
     },delay));
   }
@@ -1461,8 +1452,23 @@ function schedAll(){
     }
     if(n.reminder)schedRecur(n);
   });
-  // Habit reminders — rescheduled at every app open / save
+  // Habit reminders — in-page timers (backup when page is open)
   habits.forEach(h=>{if(h.reminderTime)schedHabitReminder(h);});
+  // Send reminder schedule to Service Worker for background delivery
+  sendRemindersToSW();
+}
+
+function sendRemindersToSW(){
+  if(!('serviceWorker' in navigator)||!navigator.serviceWorker.controller)return;
+  const reminders=habits.filter(h=>h.reminderTime).map(h=>({
+    id: h.id,
+    name: h.name,
+    time: h.reminderTime,
+    goal: h.type==='counter'?(h.goal||1):1,
+    body: h.type==='counter'?`Objectif: ${h.goal||1} ${h.unit||''}`:'',
+  }));
+  navigator.serviceWorker.controller.postMessage({type:'SCHEDULE_REMINDERS',reminders});
+  navigator.serviceWorker.controller.postMessage({type:'UPDATE_LOGS',logs:habitLogs});
 }
 
 function checkMissedHabitReminders(){
@@ -1605,7 +1611,6 @@ document.addEventListener('visibilitychange',()=>{
 
 load(); renderNotes(); chkNotif(); schedAll(); checkMissedHabitReminders(); initVoice(); updatePomoUI(); initHabitEvents();
 // DEBUG — remove after fix confirmed
-setTimeout(()=>dbg('INIT: today='+today()+' habits='+habits.length+' logs='+Object.keys(habitLogs).length),500);
 </script>
 </body>
 </html>
