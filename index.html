@@ -1306,7 +1306,7 @@ function delHabit(){
 }
 
 function schedHabitReminder(h){
-  if(!h.reminderTime||Notification.permission!=='granted')return;
+  if(!h.reminderTime||typeof Notification==='undefined'||Notification.permission!=='granted')return;
   const[hh,mm]=h.reminderTime.split(':').map(Number);
   const now=new Date(), nx=new Date();
   nx.setHours(hh,mm,0,0);
@@ -1379,7 +1379,8 @@ function playPomo(){
         if(pomoMode==='work'){
           pomoSessions=(pomoSessions+1)%5;
           toast('🎉 Session terminée ! Prends une pause.');
-          if(Notification.permission==='granted')new Notification('⏱️ Pomodoro terminé',{body:'Prends une pause bien méritée !',icon:'icon-192.png'});
+          if(typeof Notification!=='undefined'&&Notification.permission==='granted')
+            new Notification('⏱️ Pomodoro terminé',{body:'Prends une pause bien méritée !',icon:'icon-192.png'});
           setPomoMode('break');
         }else{toast('💪 Pause terminée ! Au travail.');setPomoMode('work');}
         return;
@@ -1424,7 +1425,7 @@ function openTaskPicker(){
 // ══════════════════════════════════════════════
 function schedAll(){
   remTimers.forEach(clearTimeout); remTimers=[];
-  if(Notification.permission!=='granted')return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
   // Note reminders
   notes.filter(n=>n.reminderDate||n.reminder).forEach(n=>{
     if(n.reminderDate&&!n.reminder){
@@ -1438,7 +1439,7 @@ function schedAll(){
 }
 
 function checkMissedHabitReminders(){
-  if(Notification.permission!=='granted')return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
   const now=new Date();
   const td=today();
   habits.forEach(h=>{
@@ -1468,10 +1469,15 @@ function nextRecur(n){
 }
 function fireNotif(n){
   const plain=(n.body||'').replace(/<[^>]+>/g,'').slice(0,100);
-  try{new Notification(`🔔 ${n.title||'Rappel'}`,{body:plain||'',tag:n.id,icon:'icon-192.png'});}
-  catch{toast(`🔔 ${n.title}`);}
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    try{new Notification(`🔔 ${n.title||'Rappel'}`,{body:plain||'',tag:n.id,icon:'icon-192.png'});}
+    catch(e){toast(`🔔 ${n.title}`);}
+  }else{toast(`🔔 ${n.title}`);}
 }
-function chkNotif(){if(!('Notification'in window))return;if(Notification.permission==='default')document.getElementById('nb').classList.remove('hide');}
+function chkNotif(){
+  if(typeof Notification==='undefined')return;
+  if(Notification.permission==='default')document.getElementById('nb').classList.remove('hide');
+}
 
 // ══════════════════════════════════════════════
 // TOAST
@@ -1539,6 +1545,7 @@ document.getElementById('voice-btn').addEventListener('click',toggleVoice);
 document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();document.execCommand(b.dataset.cmd,false,null);document.getElementById('ed').focus();}));
 
 document.getElementById('nb').addEventListener('click',async()=>{
+  if(typeof Notification==='undefined'){toast('❌ Notifications non supportées');return;}
   const r=await Notification.requestPermission();
   if(r==='granted'){document.getElementById('nb').classList.add('hide');schedAll();toast('✅ Notifications activées');}
 });
