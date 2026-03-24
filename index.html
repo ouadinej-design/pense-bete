@@ -178,11 +178,9 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
 .h-item.done-item{border-color:rgba(200,255,71,.18);background:rgba(200,255,71,.03)}
 .h-item.done-item::before{opacity:1}
 .h-left{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
-.h-check{width:36px;height:36px;border-radius:50%;border:2.5px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .22s cubic-bezier(.34,1.56,.64,1);cursor:pointer}
-.h-check.done{background:var(--lime);border-color:var(--lime);transform:scale(1.1)}
-.h-check.done::after{content:'✓';font-size:15px;color:#080808;font-weight:800}
-.h-check.done .h-check-ico{display:none}
-.h-check-ico{font-size:16px;line-height:1}
+.h-check-btn{width:38px;height:38px;border-radius:50%;border:2.5px solid var(--b2);background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .22s cubic-bezier(.34,1.56,.64,1);-webkit-appearance:none;color:var(--tx);flex-shrink:0;padding:0;}
+.h-check-btn.done{background:var(--lime);border-color:var(--lime);color:#080808;font-weight:800;font-size:16px;transform:scale(1.1);}
+.h-check-btn:active{transform:scale(.88)!important;}
 .h-streak{font-size:9px;color:var(--ora);font-weight:700}
 .h-body{flex:1;min-width:0}
 .h-name{font-family:var(--hf);font-size:14px;font-weight:700;margin-bottom:4px;line-height:1.2}
@@ -431,7 +429,7 @@ html,body{height:100%;font-family:var(--bf);background:var(--bg);color:var(--tx)
   <div class="tab" id="tab-habits">
     <div class="tab-header">
       <div class="eyebrow">MES ROUTINES</div>
-      <div class="tab-title">Habitudes</div>
+      <div class="tab-title">Habitudes <span style="font-size:11px;color:var(--lime);font-family:var(--bf);font-weight:400">v6</span></div>
     </div>
     <div class="scroll">
       <div class="h-hero">
@@ -1031,12 +1029,11 @@ function renderHabits(){
       const goal=h.type==='counter'?(h.goal||1):1;
       const isDone=val>=goal;
       const pct=Math.min(100,Math.round(val/goal*100));
-      const checkClass=`h-check${isDone?' done':''}`;
 
       if(h.type==='counter'){
         return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}">
           <div class="h-left">
-            <div class="${checkClass}" data-hid="${h.id}"><span class="h-check-ico">${cat.icon}</span></div>
+            <button class="h-check-btn${isDone?' done':''}" data-hid="${h.id}" type="button">${isDone?'✓':cat.icon}</button>
             ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
           </div>
           <div class="h-body" style="flex:1;min-width:0">
@@ -1048,16 +1045,16 @@ function renderHabits(){
             ${h.reminderTime?`<div class="h-reminder">⏰ ${h.reminderTime}</div>`:''}
           </div>
           <div class="h-counter">
-            <button class="h-cnt-btn h-dec" data-hid="${h.id}">−</button>
+            <button class="h-cnt-btn h-dec" data-hid="${h.id}" type="button">−</button>
             <div><div class="h-cnt-val" style="color:${cat.color}">${val}</div><div class="h-cnt-goal">/${goal}</div></div>
-            <button class="h-cnt-btn h-inc" data-hid="${h.id}">+</button>
+            <button class="h-cnt-btn h-inc" data-hid="${h.id}" type="button">+</button>
           </div>
         </div>`;
       }
 
       return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}">
         <div class="h-left">
-          <div class="${checkClass}" data-hid="${h.id}"><span class="h-check-ico">${cat.icon}</span></div>
+          <button class="h-check-btn${isDone?' done':''}" data-hid="${h.id}" type="button">${isDone?'✓':cat.icon}</button>
           ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
         </div>
         <div class="h-body" style="flex:1;min-width:0">
@@ -1082,48 +1079,52 @@ function renderHabits(){
       <div class="routine-items">${items}</div>
     </div>`;
   }).join('');
+}
 
-  // ── EVENT DELEGATION — single listener, reliable on all mobile browsers ──
-  sec.addEventListener('click', function handler(e){
-    const td2=today();
+function getCatLabel(c){return HCATS[c]?.label||c;}
 
-    // + button (counter increment)
-    const incBtn=e.target.closest('.h-inc');
-    if(incBtn){
-      const h=habits.find(x=>x.id===incBtn.dataset.hid); if(!h)return;
-      const cur=getLogVal(h.id,td2);
-      if(cur<(h.goal||1)*3)setLogVal(h.id,td2,cur+1);
+// ── HABIT EVENTS — attached ONCE at init, never inside renderHabits ──
+function initHabitEvents(){
+  const sec=document.getElementById('habit-sections');
+  sec.addEventListener('click',function(e){
+    const td=today();
+
+    // Counter +
+    const inc=e.target.closest('.h-inc');
+    if(inc){
+      e.preventDefault();
+      const h=habits.find(x=>x.id===inc.dataset.hid); if(!h)return;
+      const cur=getLogVal(h.id,td);
+      setLogVal(h.id,td,Math.min(cur+1,(h.goal||1)*3));
       if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
       renderHabits(); return;
     }
-    // - button (counter decrement)
-    const decBtn=e.target.closest('.h-dec');
-    if(decBtn){
-      const h=habits.find(x=>x.id===decBtn.dataset.hid); if(!h)return;
-      const cur=getLogVal(h.id,td2);
-      if(cur>0)setLogVal(h.id,td2,cur-1);
+    // Counter -
+    const dec=e.target.closest('.h-dec');
+    if(dec){
+      e.preventDefault();
+      const h=habits.find(x=>x.id===dec.dataset.hid); if(!h)return;
+      const cur=getLogVal(h.id,td);
+      if(cur>0)setLogVal(h.id,td,cur-1);
       renderHabits(); return;
     }
-    // check circle (non-counter toggle)
-    const chk=e.target.closest('.h-check[data-hid]');
+    // Check button (non-counter)
+    const chk=e.target.closest('.h-check-btn');
     if(chk){
+      e.preventDefault();
       const h=habits.find(x=>x.id===chk.dataset.hid); if(!h)return;
-      if(h.type==='counter')return; // counter uses + / - only
-      const cur=getLogVal(h.id,td2);
-      setLogVal(h.id,td2,cur?0:1);
+      const cur=getLogVal(h.id,td);
+      setLogVal(h.id,td,cur?0:1);
       renderHabits();
       toast(cur?'↩️ Annulé':'✅ Fait !');
       return;
     }
-    // tap on card body → edit (only if no interactive child was hit)
+    // Edit — tap on name/body area
     const item=e.target.closest('.h-item[data-hid]');
-    if(item&&!e.target.closest('.h-counter')){
+    if(item&&!e.target.closest('.h-counter,.h-check-btn,.h-cnt-btn'))
       openHabitSheet(item.dataset.hid);
-    }
   });
 }
-
-function getCatLabel(c){return HCATS[c]?.label||c;}
 
 // ══════════════════════════════════════════════
 // NOTE SHEET
@@ -1576,7 +1577,7 @@ document.addEventListener('visibilitychange',()=>{
   }
 });
 
-load(); renderNotes(); chkNotif(); schedAll(); checkMissedHabitReminders(); initVoice(); updatePomoUI();
+load(); renderNotes(); chkNotif(); schedAll(); checkMissedHabitReminders(); initVoice(); updatePomoUI(); initHabitEvents();
 </script>
 </body>
 </html>
