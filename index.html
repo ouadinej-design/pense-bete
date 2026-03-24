@@ -1033,10 +1033,10 @@ function renderHabits(){
       if(h.type==='counter'){
         return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}">
           <div class="h-left">
-            <button class="h-check-btn${isDone?' done':''}" onclick="habitCheck('${h.id}')" type="button">${isDone?'✓':cat.icon}</button>
+            <button class="h-check-btn${isDone?' done':''}" data-action="check" data-hid="${h.id}" type="button">${isDone?'✓':cat.icon}</button>
             ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
           </div>
-          <div class="h-body" style="flex:1;min-width:0" onclick="openHabitSheet('${h.id}')">
+          <div class="h-body" style="flex:1;min-width:0" data-action="edit" data-hid="${h.id}">
             <div class="h-name">${esc(h.name)}</div>
             <div class="h-prog-row">
               <div class="h-progbar"><div class="h-progbar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
@@ -1045,18 +1045,18 @@ function renderHabits(){
             ${h.reminderTime?`<div class="h-reminder">⏰ ${h.reminderTime}</div>`:''}
           </div>
           <div class="h-counter">
-            <button class="h-cnt-btn h-dec" onclick="habitDec('${h.id}')" type="button">−</button>
+            <button class="h-cnt-btn" data-action="dec" data-hid="${h.id}" type="button">−</button>
             <div><div class="h-cnt-val" style="color:${cat.color}">${val}</div><div class="h-cnt-goal">/${goal}</div></div>
-            <button class="h-cnt-btn h-inc" onclick="habitInc('${h.id}')" type="button">+</button>
+            <button class="h-cnt-btn" data-action="inc" data-hid="${h.id}" type="button">+</button>
           </div>
         </div>`;
       }
       return `<div class="h-item${isDone?' done-item':''}" data-hid="${h.id}">
         <div class="h-left">
-          <button class="h-check-btn${isDone?' done':''}" onclick="habitCheck('${h.id}')" type="button">${isDone?'✓':cat.icon}</button>
+          <button class="h-check-btn${isDone?' done':''}" data-action="check" data-hid="${h.id}" type="button">${isDone?'✓':cat.icon}</button>
           ${streak>0?`<div class="h-streak">🔥${streak}</div>`:''}
         </div>
-        <div class="h-body" style="flex:1;min-width:0" onclick="openHabitSheet('${h.id}')">
+        <div class="h-body" style="flex:1;min-width:0" data-action="edit" data-hid="${h.id}">
           <div class="h-name">${esc(h.name)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
             <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:${cat.bg};color:${cat.color}">${cat.icon} ${cat.label}</span>
@@ -1121,7 +1121,36 @@ function dbg(msg){
   el.innerHTML=msg+'<br>'+el.innerHTML;
 }
 
-function initHabitEvents(){} // kept for compatibility, logic moved to onclick
+function initHabitEvents(){
+  // Document-level listener — survives innerHTML replacement, bypasses CSP
+  document.addEventListener('click', function(e){
+    const btn=e.target.closest('[data-action][data-hid]');
+    if(!btn)return;
+    const action=btn.dataset.action;
+    const hid=btn.dataset.hid;
+    const td=today();
+    dbg('ACTION='+action+' hid='+hid);
+    if(action==='check'){
+      const h=habits.find(x=>x.id===hid); if(!h)return;
+      const cur=getLogVal(h.id,td);
+      setLogVal(h.id,td,cur?0:1);
+      renderHabits();
+      toast(cur?'↩️ Annulé':'✅ Fait !');
+    } else if(action==='inc'){
+      const h=habits.find(x=>x.id===hid); if(!h)return;
+      const cur=getLogVal(h.id,td);
+      setLogVal(h.id,td,Math.min(cur+1,(h.goal||1)*3));
+      if(cur+1>=(h.goal||1))toast('🎯 Objectif atteint !');
+      renderHabits();
+    } else if(action==='dec'){
+      const h=habits.find(x=>x.id===hid); if(!h)return;
+      const cur=getLogVal(h.id,td);
+      if(cur>0){setLogVal(h.id,td,cur-1);renderHabits();}
+    } else if(action==='edit'){
+      openHabitSheet(hid);
+    }
+  });
+}
 
 // ══════════════════════════════════════════════
 // NOTE SHEET
